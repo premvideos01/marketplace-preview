@@ -10,40 +10,83 @@
 </head>
 <body>
 
-<!-- Phone frame for desktop preview -->
 <div class="frame">
   <div class="phone">
 
-    <!-- ==================== BROWSE ==================== -->
-    <section class="view view-browse" data-view="browse">
+    <!-- ==================== HOME ==================== -->
+    <section class="view view-home" data-view="home">
       <header class="topbar">
         <button class="loc-chip" id="locChip">
           <span class="loc-icon">📍</span>
-          <span id="locLabel">Tap to set location</span>
+          <span id="locLabel">Set location</span>
           <span class="caret">▾</span>
         </button>
-        <button class="icon-btn" data-act="search" aria-label="Search">🔍</button>
+        <button class="icon-btn" data-go="saved" aria-label="Saved">♡</button>
       </header>
 
       <div class="search-wrap">
-        <input id="searchInput" class="search" type="text" placeholder="Search local goods…">
+        <button class="search-stub" data-go="search">
+          <span>🔍</span>
+          <span>Search local goods…</span>
+        </button>
       </div>
 
-      <nav class="cat-rail" id="catRail"></nav>
+      <main class="home-scroll">
+        <h3 class="section-h">Browse categories</h3>
+        <div class="cat-grid" id="catGrid"></div>
 
-      <main class="grid" id="grid"></main>
+        <div class="row-head">
+          <h3 class="section-h" style="margin: 0">Nearby</h3>
+          <button class="link-btn" data-show-filters>Filter ▾</button>
+        </div>
+
+        <div class="filter-row" id="filterRow" hidden>
+          <select id="sortSel">
+            <option value="newest">Newest</option>
+            <option value="price-asc">Price: low to high</option>
+            <option value="price-desc">Price: high to low</option>
+            <option value="distance">Distance</option>
+          </select>
+          <div class="chip-row">
+            <button class="chip" data-price="all">All</button>
+            <button class="chip" data-price="free">Free</button>
+            <button class="chip" data-price="25">Under $25</button>
+            <button class="chip" data-price="100">Under $100</button>
+            <button class="chip" data-price="500">Under $500</button>
+          </div>
+        </div>
+
+        <div class="grid" id="grid"></div>
+      </main>
+    </section>
+
+    <!-- ==================== SEARCH ==================== -->
+    <section class="view view-search" data-view="search" hidden>
+      <header class="topbar">
+        <button class="icon-btn back" data-back>‹</button>
+        <input id="searchInput" class="search inline-search" type="text" placeholder="Search…" autocomplete="off">
+        <button class="text-btn" id="clearSearch" hidden>Clear</button>
+      </header>
+      <main class="search-scroll" id="searchScroll">
+        <h3 class="section-h">Recent searches</h3>
+        <div class="recent-row" id="recentRow"></div>
+        <h3 class="section-h">Trending categories</h3>
+        <div class="cat-grid mini" id="trendingGrid"></div>
+        <h3 class="section-h" id="resultsHead" hidden>Results</h3>
+        <div class="grid" id="searchResults"></div>
+      </main>
     </section>
 
     <!-- ==================== ITEM DETAIL ==================== -->
     <section class="view view-detail" data-view="detail" hidden>
       <header class="topbar topbar-detail">
         <button class="icon-btn back" data-back>‹</button>
-        <button class="icon-btn" aria-label="Save">♡</button>
+        <button class="icon-btn" id="detailHeart" aria-label="Save">♡</button>
       </header>
       <div class="detail-scroll" id="detailScroll"></div>
       <footer class="detail-footer">
-        <button class="btn btn-ghost">Message</button>
-        <button class="btn btn-primary">Buy now</button>
+        <button class="btn btn-ghost" data-go="inbox">Message</button>
+        <button class="btn btn-primary">Make offer</button>
       </footer>
     </section>
 
@@ -92,6 +135,26 @@
       </main>
     </section>
 
+    <!-- ==================== INBOX ==================== -->
+    <section class="view view-inbox" data-view="inbox" hidden>
+      <header class="topbar"><span class="topbar-title">Messages</span></header>
+      <div class="inbox-scroll">
+        <ul class="conv-list" id="convList"></ul>
+      </div>
+    </section>
+
+    <!-- ==================== SAVED ==================== -->
+    <section class="view view-saved" data-view="saved" hidden>
+      <header class="topbar">
+        <button class="icon-btn back" data-back>‹</button>
+        <span class="topbar-title">Saved</span>
+        <span style="width:36px"></span>
+      </header>
+      <main class="saved-scroll">
+        <div class="grid" id="savedGrid"></div>
+      </main>
+    </section>
+
     <!-- ==================== PROFILE ==================== -->
     <section class="view view-profile" data-view="profile" hidden>
       <header class="topbar"><span class="topbar-title">Profile</span></header>
@@ -104,9 +167,9 @@
           </div>
         </div>
         <div class="stats">
-          <div><b>4</b><span>Listed</span></div>
-          <div><b>12</b><span>Sold</span></div>
-          <div><b>3</b><span>Saved</span></div>
+          <button class="stat-btn"><b>4</b><span>Listed</span></button>
+          <button class="stat-btn"><b>12</b><span>Sold</span></button>
+          <button class="stat-btn" data-go="saved"><b id="savedCount">0</b><span>Saved</span></button>
         </div>
         <h3 class="section-h">My listings</h3>
         <div class="grid" id="myListings"></div>
@@ -124,17 +187,17 @@
 
     <!-- ==================== BOTTOM NAV ==================== -->
     <nav class="tabbar">
-      <button class="tab" data-go="browse">
+      <button class="tab" data-go="home">
         <span class="tab-ico">⌂</span><span>Home</span>
       </button>
-      <button class="tab" data-go="browse" data-focus-search>
+      <button class="tab" data-go="search">
         <span class="tab-ico">🔍</span><span>Search</span>
       </button>
       <button class="tab tab-sell" data-go="post">
         <span class="sell-circle">+</span>
       </button>
-      <button class="tab" data-go="messages">
-        <span class="tab-ico">💬</span><span>Messages</span>
+      <button class="tab" data-go="inbox">
+        <span class="tab-ico">💬</span><span>Inbox</span>
       </button>
       <button class="tab" data-go="profile">
         <span class="tab-ico">👤</span><span>Profile</span>
