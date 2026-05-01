@@ -1,0 +1,161 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, maximum-scale=1">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="default">
+  <title>Hometown — Local Marketplace</title>
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+
+<!-- Phone frame for desktop preview -->
+<div class="frame">
+  <div class="phone">
+
+    <!-- ==================== BROWSE ==================== -->
+    <section class="view view-browse" data-view="browse">
+      <header class="topbar">
+        <button class="loc-chip" id="locChip">
+          <span class="loc-icon">📍</span>
+          <span id="locLabel">Tap to set location</span>
+          <span class="caret">▾</span>
+        </button>
+        <button class="icon-btn" data-act="search" aria-label="Search">🔍</button>
+      </header>
+
+      <div class="search-wrap">
+        <input id="searchInput" class="search" type="text" placeholder="Search local goods…">
+      </div>
+
+      <nav class="cat-rail" id="catRail"></nav>
+
+      <main class="grid" id="grid"></main>
+    </section>
+
+    <!-- ==================== ITEM DETAIL ==================== -->
+    <section class="view view-detail" data-view="detail" hidden>
+      <header class="topbar topbar-detail">
+        <button class="icon-btn back" data-back>‹</button>
+        <button class="icon-btn" aria-label="Save">♡</button>
+      </header>
+      <div class="detail-scroll" id="detailScroll"></div>
+      <footer class="detail-footer">
+        <button class="btn btn-ghost">Message</button>
+        <button class="btn btn-primary">Buy now</button>
+      </footer>
+    </section>
+
+    <!-- ==================== POST ==================== -->
+    <section class="view view-post" data-view="post" hidden>
+      <header class="topbar topbar-modal">
+        <button class="text-btn" data-back>Cancel</button>
+        <span class="topbar-title">List an item</span>
+        <button class="text-btn primary" id="postPublish">Post</button>
+      </header>
+      <main class="post-form">
+        <button class="photo-add">
+          <span class="plus">+</span>
+          <span>Add photos</span>
+        </button>
+        <label class="field">
+          <span>Title</span>
+          <input type="text" placeholder="What are you selling?">
+        </label>
+        <label class="field">
+          <span>Price</span>
+          <input type="text" inputmode="decimal" placeholder="$0">
+        </label>
+        <label class="field">
+          <span>Category</span>
+          <select id="postCategory"></select>
+        </label>
+        <label class="field">
+          <span>Condition</span>
+          <select>
+            <option>New</option>
+            <option>Like new</option>
+            <option>Good</option>
+            <option>Fair</option>
+            <option>For parts</option>
+          </select>
+        </label>
+        <label class="field">
+          <span>Description</span>
+          <textarea rows="4" placeholder="Tell buyers about it…"></textarea>
+        </label>
+        <label class="field">
+          <span>Location (ZIP)</span>
+          <input id="postZip" type="text" inputmode="numeric" maxlength="5" placeholder="ZIP code">
+        </label>
+      </main>
+    </section>
+
+    <!-- ==================== PROFILE ==================== -->
+    <section class="view view-profile" data-view="profile" hidden>
+      <header class="topbar"><span class="topbar-title">Profile</span></header>
+      <div class="profile-scroll">
+        <div class="profile-head">
+          <div class="avatar">B</div>
+          <div>
+            <div class="name">Ber</div>
+            <div class="muted">★ 4.9 · 12 sales</div>
+          </div>
+        </div>
+        <div class="stats">
+          <div><b>4</b><span>Listed</span></div>
+          <div><b>12</b><span>Sold</span></div>
+          <div><b>3</b><span>Saved</span></div>
+        </div>
+        <h3 class="section-h">My listings</h3>
+        <div class="grid" id="myListings"></div>
+        <h3 class="section-h">Settings</h3>
+        <ul class="menu">
+          <li>Notifications<span class="caret">›</span></li>
+          <li>Payment methods<span class="caret">›</span></li>
+          <li>Shipping addresses<span class="caret">›</span></li>
+          <li>Privacy<span class="caret">›</span></li>
+          <li>Help &amp; support<span class="caret">›</span></li>
+          <li class="muted">Sign out<span class="caret">›</span></li>
+        </ul>
+      </div>
+    </section>
+
+    <!-- ==================== BOTTOM NAV ==================== -->
+    <nav class="tabbar">
+      <button class="tab" data-go="browse">
+        <span class="tab-ico">⌂</span><span>Home</span>
+      </button>
+      <button class="tab" data-go="browse" data-focus-search>
+        <span class="tab-ico">🔍</span><span>Search</span>
+      </button>
+      <button class="tab tab-sell" data-go="post">
+        <span class="sell-circle">+</span>
+      </button>
+      <button class="tab" data-go="messages">
+        <span class="tab-ico">💬</span><span>Messages</span>
+      </button>
+      <button class="tab" data-go="profile">
+        <span class="tab-ico">👤</span><span>Profile</span>
+      </button>
+    </nav>
+
+    <!-- ==================== ZIP PICKER MODAL ==================== -->
+    <div class="modal" id="zipModal" hidden>
+      <div class="sheet">
+        <header class="sheet-head">
+          <span>Choose location</span>
+          <button class="text-btn" id="zipClose">Done</button>
+        </header>
+        <input id="zipSearch" class="search" type="text" placeholder="Search city, state, or ZIP…" autocomplete="off">
+        <ul id="zipList" class="zip-list"></ul>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<script src="app.js"></script>
+</body>
+</html>
