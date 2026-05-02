@@ -12,5 +12,13 @@ shows inside an iPhone frame) to navigate the four screens:
 - **List an item** — full posting form
 - **Profile** — your listings + settings
 
-This is a static front-end mockup intended to lock in design and
-feature scope before native iOS/Android builds.
+## Backend
+
+This frontend talks to the marketplace backend at
+[premvideos01/marketplace-server](https://github.com/premvideos01/marketplace-server).
+
+On first load you'll be asked for your backend URL (e.g.
+`https://marketplace.your-domain.com`). It's stored in your browser's
+`localStorage` so you only enter it once. After that, sign up — the first
+account that signs up with the `ADMIN_EMAIL` (set on the backend) becomes the
+admin and gets the **Admin** entry in the Profile screen.

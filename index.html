@@ -13,8 +13,51 @@
 <div class="frame">
   <div class="phone">
 
+    <!-- ==================== SETUP (first run) ==================== -->
+    <section class="view view-setup" data-view="setup" hidden>
+      <div class="onboard">
+        <h1>Hometown</h1>
+        <p class="muted">Connect to your backend to get started.</p>
+        <label class="field">
+          <span>Backend URL</span>
+          <input id="setupUrl" type="url" placeholder="https://marketplace.your-domain.com">
+        </label>
+        <button class="btn btn-primary" id="setupSave">Continue</button>
+        <p class="hint muted">You'll only see this once. Backend code:
+          <a href="https://github.com/premvideos01/marketplace-server" target="_blank">github.com/premvideos01/marketplace-server</a></p>
+      </div>
+    </section>
+
+    <!-- ==================== LOGIN ==================== -->
+    <section class="view view-login" data-view="login" hidden>
+      <div class="onboard">
+        <h1>Welcome back</h1>
+        <p class="muted">Sign in to continue.</p>
+        <label class="field"><span>Email</span><input id="loginEmail" type="email" autocomplete="email"></label>
+        <label class="field"><span>Password</span><input id="loginPass" type="password" autocomplete="current-password"></label>
+        <div class="error" id="loginErr" hidden></div>
+        <button class="btn btn-primary" id="loginGo">Sign in</button>
+        <p class="hint">No account? <a href="#" data-go="signup">Sign up</a></p>
+        <p class="hint muted"><a href="#" data-reset-backend>Change backend URL</a></p>
+      </div>
+    </section>
+
+    <!-- ==================== SIGNUP ==================== -->
+    <section class="view view-signup" data-view="signup" hidden>
+      <div class="onboard">
+        <h1>Create your account</h1>
+        <label class="field"><span>Email</span><input id="suEmail" type="email" autocomplete="email"></label>
+        <label class="field"><span>Username</span><input id="suUser" type="text" autocomplete="username" placeholder="3–24 chars, letters/digits/_"></label>
+        <label class="field"><span>Display name (optional)</span><input id="suName" type="text"></label>
+        <label class="field"><span>Password</span><input id="suPass" type="password" autocomplete="new-password" placeholder="8+ characters"></label>
+        <div class="error" id="suErr" hidden></div>
+        <button class="btn btn-primary" id="suGo">Create account</button>
+        <p class="hint">Have an account? <a href="#" data-go="login">Sign in</a></p>
+      </div>
+    </section>
+
     <!-- ==================== HOME ==================== -->
-    <section class="view view-home" data-view="home">
+    <section class="view view-home" data-view="home" hidden>
       <header class="topbar">
         <button class="loc-chip" id="locChip">
           <span class="loc-icon">📍</span>
@@ -45,11 +88,10 @@
             <option value="newest">Newest</option>
             <option value="price-asc">Price: low to high</option>
             <option value="price-desc">Price: high to low</option>
-            <option value="distance">Distance</option>
           </select>
           <div class="chip-row">
-            <button class="chip" data-price="all">All</button>
-            <button class="chip" data-price="free">Free</button>
+            <button class="chip active" data-price="all">All</button>
+            <button class="chip" data-price="0">Free</button>
             <button class="chip" data-price="25">Under $25</button>
             <button class="chip" data-price="100">Under $100</button>
             <button class="chip" data-price="500">Under $500</button>
@@ -68,8 +110,6 @@
         <button class="text-btn" id="clearSearch" hidden>Clear</button>
       </header>
       <main class="search-scroll" id="searchScroll">
-        <h3 class="section-h">Recent searches</h3>
-        <div class="recent-row" id="recentRow"></div>
         <h3 class="section-h">Trending categories</h3>
         <div class="cat-grid mini" id="trendingGrid"></div>
         <h3 class="section-h" id="resultsHead" hidden>Results</h3>
@@ -85,8 +125,8 @@
       </header>
       <div class="detail-scroll" id="detailScroll"></div>
       <footer class="detail-footer">
-        <button class="btn btn-ghost" data-go="inbox">Message</button>
-        <button class="btn btn-primary">Make offer</button>
+        <button class="btn btn-ghost" id="msgSeller">Message</button>
+        <button class="btn btn-primary" id="makeOffer">Make offer</button>
       </footer>
     </section>
 
@@ -98,40 +138,23 @@
         <button class="text-btn primary" id="postPublish">Post</button>
       </header>
       <main class="post-form">
-        <button class="photo-add">
+        <div class="photo-strip" id="photoStrip"></div>
+        <label class="photo-add">
+          <input type="file" id="photoInput" accept="image/*" multiple hidden>
           <span class="plus">+</span>
           <span>Add photos</span>
-        </button>
-        <label class="field">
-          <span>Title</span>
-          <input type="text" placeholder="What are you selling?">
         </label>
-        <label class="field">
-          <span>Price</span>
-          <input type="text" inputmode="decimal" placeholder="$0">
-        </label>
-        <label class="field">
-          <span>Category</span>
-          <select id="postCategory"></select>
-        </label>
-        <label class="field">
-          <span>Condition</span>
-          <select>
-            <option>New</option>
-            <option>Like new</option>
-            <option>Good</option>
-            <option>Fair</option>
-            <option>For parts</option>
+        <label class="field"><span>Title</span><input id="poTitle" type="text" placeholder="What are you selling?"></label>
+        <label class="field"><span>Price ($)</span><input id="poPrice" type="text" inputmode="decimal" placeholder="0"></label>
+        <label class="field"><span>Category</span><select id="poCategory"></select></label>
+        <label class="field"><span>Condition</span>
+          <select id="poCond">
+            <option>New</option><option>Like new</option><option>Good</option><option>Fair</option><option>For parts</option>
           </select>
         </label>
-        <label class="field">
-          <span>Description</span>
-          <textarea rows="4" placeholder="Tell buyers about it…"></textarea>
-        </label>
-        <label class="field">
-          <span>Location (ZIP)</span>
-          <input id="postZip" type="text" inputmode="numeric" maxlength="5" placeholder="ZIP code">
-        </label>
+        <label class="field"><span>Description</span><textarea id="poDesc" rows="4" placeholder="Tell buyers about it…"></textarea></label>
+        <label class="field"><span>Location (ZIP)</span><input id="poZip" type="text" inputmode="numeric" maxlength="5" placeholder="ZIP code"></label>
+        <div class="error" id="poErr" hidden></div>
       </main>
     </section>
 
@@ -141,6 +164,19 @@
       <div class="inbox-scroll">
         <ul class="conv-list" id="convList"></ul>
       </div>
+    </section>
+
+    <!-- ==================== CONVERSATION ==================== -->
+    <section class="view view-conv" data-view="conv" hidden>
+      <header class="topbar">
+        <button class="icon-btn back" data-back>‹</button>
+        <div class="conv-header" id="convHeader"></div>
+      </header>
+      <div class="msg-scroll" id="msgScroll"></div>
+      <form class="msg-compose" id="msgForm">
+        <input id="msgInput" type="text" placeholder="Message…" autocomplete="off">
+        <button class="btn btn-primary" type="submit">Send</button>
+      </form>
     </section>
 
     <!-- ==================== SAVED ==================== -->
@@ -160,51 +196,66 @@
       <header class="topbar"><span class="topbar-title">Profile</span></header>
       <div class="profile-scroll">
         <div class="profile-head">
-          <div class="avatar">B</div>
+          <div class="avatar" id="profAvatar">?</div>
           <div>
-            <div class="name">Ber</div>
-            <div class="muted">★ 4.9 · 12 sales</div>
+            <div class="name" id="profName">—</div>
+            <div class="muted" id="profMeta">—</div>
           </div>
         </div>
         <div class="stats">
-          <button class="stat-btn"><b>4</b><span>Listed</span></button>
-          <button class="stat-btn"><b>12</b><span>Sold</span></button>
+          <button class="stat-btn"><b id="profListed">0</b><span>Listed</span></button>
           <button class="stat-btn" data-go="saved"><b id="savedCount">0</b><span>Saved</span></button>
+          <button class="stat-btn"><b id="profPremium">—</b><span>Plan</span></button>
         </div>
         <h3 class="section-h">My listings</h3>
         <div class="grid" id="myListings"></div>
         <h3 class="section-h">Settings</h3>
         <ul class="menu">
+          <li id="adminEntry" hidden data-go="admin">Admin dashboard<span class="caret">›</span></li>
           <li>Notifications<span class="caret">›</span></li>
-          <li>Payment methods<span class="caret">›</span></li>
-          <li>Shipping addresses<span class="caret">›</span></li>
           <li>Privacy<span class="caret">›</span></li>
           <li>Help &amp; support<span class="caret">›</span></li>
-          <li class="muted">Sign out<span class="caret">›</span></li>
+          <li class="danger" id="logoutBtn">Sign out<span class="caret">›</span></li>
         </ul>
       </div>
     </section>
 
+    <!-- ==================== ADMIN ==================== -->
+    <section class="view view-admin" data-view="admin" hidden>
+      <header class="topbar">
+        <button class="icon-btn back" data-back>‹</button>
+        <span class="topbar-title">Admin</span>
+        <span style="width:36px"></span>
+      </header>
+      <div class="admin-scroll">
+        <h3 class="section-h">Stats</h3>
+        <div class="stat-grid" id="adminStats"></div>
+
+        <h3 class="section-h">Marketplace mode</h3>
+        <div class="mode-row">
+          <label><input type="radio" name="mode" value="open"> <b>Open</b><span class="muted"> Everyone can do anything (recommended for growth).</span></label>
+          <label><input type="radio" name="mode" value="premium-post"> <b>Premium to post</b><span class="muted"> Free users browse + buy; premium can sell + message.</span></label>
+          <label><input type="radio" name="mode" value="premium-browse"> <b>Premium to browse</b><span class="muted"> Hidden marketplace, only premium can see listings.</span></label>
+          <label><input type="radio" name="mode" value="premium-all"> <b>Premium for everything</b><span class="muted"> Full paywall after signup.</span></label>
+          <button class="btn btn-primary" id="modeSave">Apply mode</button>
+        </div>
+
+        <h3 class="section-h">Users</h3>
+        <input id="adminUserSearch" class="search" type="text" placeholder="Search by email or username…">
+        <div class="user-list" id="adminUserList"></div>
+      </div>
+    </section>
+
     <!-- ==================== BOTTOM NAV ==================== -->
-    <nav class="tabbar">
-      <button class="tab" data-go="home">
-        <span class="tab-ico">⌂</span><span>Home</span>
-      </button>
-      <button class="tab" data-go="search">
-        <span class="tab-ico">🔍</span><span>Search</span>
-      </button>
-      <button class="tab tab-sell" data-go="post">
-        <span class="sell-circle">+</span>
-      </button>
-      <button class="tab" data-go="inbox">
-        <span class="tab-ico">💬</span><span>Inbox</span>
-      </button>
-      <button class="tab" data-go="profile">
-        <span class="tab-ico">👤</span><span>Profile</span>
-      </button>
+    <nav class="tabbar" id="tabbar" hidden>
+      <button class="tab" data-go="home"><span class="tab-ico">⌂</span><span>Home</span></button>
+      <button class="tab" data-go="search"><span class="tab-ico">🔍</span><span>Search</span></button>
+      <button class="tab tab-sell" data-go="post"><span class="sell-circle">+</span></button>
+      <button class="tab" data-go="inbox"><span class="tab-ico">💬</span><span>Inbox</span></button>
+      <button class="tab" data-go="profile"><span class="tab-ico">👤</span><span>Profile</span></button>
     </nav>
 
-    <!-- ==================== ZIP PICKER MODAL ==================== -->
+    <!-- ==================== ZIP PICKER ==================== -->
     <div class="modal" id="zipModal" hidden>
       <div class="sheet">
         <header class="sheet-head">
@@ -216,9 +267,12 @@
       </div>
     </div>
 
+    <!-- ==================== TOAST ==================== -->
+    <div class="toast" id="toast" hidden></div>
   </div>
 </div>
 
+<script src="api.js"></script>
 <script src="app.js"></script>
 </body>
 </html>

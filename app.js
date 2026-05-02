@@ -1,4 +1,4 @@
-// =================== Categories ===================
+// =================== Categories (frontend constant) ===================
 const CATEGORIES = [
   { id: "all",         name: "All",           ico: "✨" },
   { id: "electronics", name: "Electronics",   ico: "📱" },
@@ -13,420 +13,609 @@ const CATEGORIES = [
   { id: "music",       name: "Music",         ico: "🎸" },
   { id: "free",        name: "Free",          ico: "🎁" },
 ];
-
-// =================== Listings ===================
-function makeListings() {
-  const items = [
-    ["IKEA Kallax 4x4 shelf", 80, "furniture", "Like new", "Great condition. Light scratches on top.", 0],
-    ["iPhone 14 Pro 256GB",   650, "electronics", "Good", "Unlocked, battery 91%, no cracks.", 0],
-    ["Trek Marlin 6 mountain bike", 320, "sports", "Good", "Size M frame, recent tune-up.", 1],
-    ["Toddler stroller (Joovy)", 60, "toys", "Good", "Folds flat. Cup holder included.", 0],
-    ["DeWalt 20V drill kit", 110, "tools", "Like new", "Two batteries + charger + bag.", 0],
-    ["Vintage Yamaha acoustic guitar", 220, "music", "Good", "Beautiful tone, includes soft case.", 1],
-    ["Patio set (table + 4 chairs)", 140, "home", "Fair", "Powder-coated steel. Some sun fade.", 0],
-    ["Macbook Air M2 13\"", 780, "electronics", "Like new", "8GB / 256GB. Box + charger.", 0],
-    ["Vintage Levi's denim jacket", 45, "clothing", "Good", "Size L. Fits true to size.", 0],
-    ["Mid-century coffee table", 95, "furniture", "Good", "Solid walnut. 48\" wide.", 0],
-    ["Free moving boxes (~25)", 0, "free", "Used", "Various sizes. Pickup only.", 0],
-    ["Peloton Bike+", 1200, "sports", "Like new", "Original mat + shoes (size 9).", 0],
-    ["LEGO Star Wars Razor Crest set", 90, "toys", "New", "Sealed. Set 75292.", 0],
-    ["Sony WH-1000XM4 headphones", 140, "electronics", "Like new", "Original case + cable.", 0],
-    ["Toyota Tacoma 2016 SR5", 21500, "vehicles", "Good", "108k miles. Recent service.", 0],
-    ["Garden hose 100 ft + reel", 30, "home", "Good", "No leaks. Brass fittings.", 0],
-    ["Cookbook: Salt Fat Acid Heat", 12, "books", "Like new", "Hardcover, signed.", 0],
-    ["Fender Mustang amp", 95, "music", "Good", "25W. Footswitch included.", 0],
-    ["Adidas Ultraboost 22 (size 10)", 60, "clothing", "Good", "Black. Maybe 30 miles on them.", 0],
-    ["Snap-on socket set", 280, "tools", "Like new", "1/4\" + 3/8\" drives. Hard case.", 0],
-    ["Free houseplant cuttings", 0, "free", "—", "Pothos, philodendron, monstera.", 0],
-    ["Apple Watch Series 9 45mm", 320, "electronics", "Like new", "GPS, midnight aluminum.", 0],
-    ["Stand-up paddleboard inflatable", 240, "sports", "Good", "10'6\" with pump and paddle.", 0],
-    ["Antique writing desk", 180, "furniture", "Fair", "Real oak. Some wear, very sturdy.", 0],
-    ["Toaster oven (Breville)", 75, "home", "Good", "Smart oven air. Works perfectly.", 0],
-    ["Pokémon TCG sealed booster box", 130, "toys", "New", "Scarlet & Violet 151.", 0],
-    ["Carhartt work jacket", 55, "clothing", "Good", "Tan, size XL. Heavy duty.", 0],
-    ["Stack of mystery novels (12)", 18, "books", "Good", "Stephen King, Agatha Christie.", 0],
-    ["Bose SoundLink Mini 2", 70, "electronics", "Good", "Battery still strong.", 0],
-    ["Mid-century brass lamp", 40, "home", "Good", "Brass + linen shade.", 0],
-  ];
-  return items.map((it, i) => {
-    const id = i + 1;
-    return {
-      id,
-      title: it[0],
-      price: it[1],
-      cat: it[2],
-      cond: it[3],
-      desc: it[4],
-      photos: [
-        `https://picsum.photos/seed/mkt${id}a/800/800`,
-        `https://picsum.photos/seed/mkt${id}b/800/800`,
-        `https://picsum.photos/seed/mkt${id}c/800/800`,
-        `https://picsum.photos/seed/mkt${id}d/800/800`
-      ],
-      thumb: `https://picsum.photos/seed/mkt${id}a/600/600`,
-      miles: ((id * 7) % 12) + 1,
-      postedDays: (id * 3) % 14,
-      seller: ["Alex", "Jamie", "Sam", "Casey", "Riley", "Jordan"][i % 6],
-      rating: (4.4 + ((i * 0.07) % 0.6)).toFixed(1)
-    };
-  });
-}
-const LISTINGS = makeListings();
-
-// =================== Mock conversations ===================
-const CONVS = [
-  { listingId: 8,  name: "Riley", last: "Still available? Could pick up tonight.", when: "2m",  unread: true },
-  { listingId: 14, name: "Sam",   last: "Would you take $620?",                   when: "1h",  unread: true },
-  { listingId: 3,  name: "Casey", last: "Sounds good — see you at 6.",            when: "5h",  unread: false },
-  { listingId: 22, name: "Jamie", last: "Thanks for the deal!",                   when: "1d",  unread: false },
-  { listingId: 12, name: "Alex",  last: "Is the price firm?",                     when: "3d",  unread: false },
-];
+const CAT_ICON = Object.fromEntries(CATEGORIES.map(c => [c.id, c.ico]));
 
 // =================== State ===================
 const state = {
   view: "home",
   category: "all",
   query: "",
-  zip: null,
   zips: null,
   saved: new Set(),
-  recents: ["bike", "iphone", "lego", "guitar"],
   sort: "newest",
-  priceFilter: "all"
+  priceFilter: "all",
+  postPhotos: [],     // uploaded photo URLs
+  currentConv: null,  // open conversation
+  viewStack: ["home"]
 };
 
 // =================== Helpers ===================
 const $  = (q, r = document) => r.querySelector(q);
 const $$ = (q, r = document) => Array.from(r.querySelectorAll(q));
 
-function priceLabel(p) {
-  if (p === 0) return "Free";
-  return "$" + p.toLocaleString();
-}
-function postedLabel(d) {
-  if (d === 0) return "today";
-  if (d === 1) return "1d ago";
-  if (d < 7) return d + "d ago";
+function priceLabel(p) { return p === 0 ? "Free" : "$" + Number(p).toLocaleString(); }
+function postedLabel(secAgo) {
+  const m = Math.floor(secAgo / 60);
+  if (m < 1)  return "just now";
+  if (m < 60) return m + "m ago";
+  const h = Math.floor(m / 60);
+  if (h < 24) return h + "h ago";
+  const d = Math.floor(h / 24);
+  if (d < 7)  return d + "d ago";
   return Math.floor(d / 7) + "w ago";
 }
+function postedFromTs(ts) { return postedLabel(Math.max(0, Math.floor(Date.now() / 1000 - ts))); }
+function escHtml(s) { return String(s ?? "").replace(/[&<>"]/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c])); }
+function toast(msg, ms = 2200) {
+  const t = $("#toast");
+  t.textContent = msg;
+  t.hidden = false;
+  clearTimeout(toast._t);
+  toast._t = setTimeout(() => t.hidden = true, ms);
+}
+function showError(elId, err) {
+  const el = $("#" + elId);
+  el.textContent = err && err.message ? err.message : String(err);
+  el.hidden = false;
+}
+function clearError(elId) { const el = $("#" + elId); el.hidden = true; el.textContent = ""; }
 
-// =================== Filtering / sorting ===================
-function applyFilters(list) {
-  let out = list;
-  if (state.category !== "all") out = out.filter(it => it.cat === state.category);
-  if (state.query) {
-    const q = state.query.toLowerCase();
-    out = out.filter(it => it.title.toLowerCase().includes(q) || it.desc.toLowerCase().includes(q));
-  }
-  if (state.priceFilter === "free") out = out.filter(it => it.price === 0);
-  else if (state.priceFilter !== "all") {
-    const cap = parseInt(state.priceFilter, 10);
-    out = out.filter(it => it.price <= cap);
-  }
-  switch (state.sort) {
-    case "price-asc":  out = [...out].sort((a, b) => a.price - b.price); break;
-    case "price-desc": out = [...out].sort((a, b) => b.price - a.price); break;
-    case "distance":   out = [...out].sort((a, b) => a.miles - b.miles); break;
-    default:           out = [...out].sort((a, b) => a.postedDays - b.postedDays);
-  }
-  return out;
+// =================== Routing ===================
+function go(view) {
+  if (view !== state.view) state.viewStack.push(view);
+  state.view = view;
+  $$(".view").forEach(v => v.hidden = v.dataset.view !== view);
+  $$(".tab").forEach(t => t.classList.toggle("active", t.dataset.go === view));
+  // Hide tabbar on onboarding screens
+  const onboard = ["setup", "login", "signup"].includes(view);
+  $("#tabbar").hidden = onboard;
+  // View-enter hooks
+  if (view === "home")    loadHomeListings();
+  if (view === "search")  setTimeout(() => $("#searchInput").focus(), 80);
+  if (view === "saved")   loadSaved();
+  if (view === "inbox")   loadInbox();
+  if (view === "profile") renderProfile();
+  if (view === "admin")   loadAdmin();
+}
+function back() {
+  state.viewStack.pop();
+  const prev = state.viewStack[state.viewStack.length - 1] || "home";
+  state.view = ""; // force re-enter
+  go(prev);
 }
 
-// =================== Card renderer ===================
-function cardHtml(it, withHeart = true) {
+document.addEventListener("click", e => {
+  const back_ = e.target.closest("[data-back]");
+  if (back_) { e.preventDefault(); back(); return; }
+  const dest = e.target.closest("[data-go]");
+  if (dest) { e.preventDefault(); go(dest.dataset.go); return; }
+  const reset = e.target.closest("[data-reset-backend]");
+  if (reset) { e.preventDefault(); Api.setBase(null); Api.logout(); go("setup"); return; }
+});
+
+// =================== Boot ===================
+async function boot() {
+  if (!Api.base())   { go("setup"); return; }
+  if (!Api.token())  { go("login"); return; }
+  try {
+    const r = await Api.me();
+    Api.setUser(r.user);
+    bootApp();
+  } catch (e) {
+    if (e.status === 401) { Api.logout(); go("login"); }
+    else { toast("Backend unreachable: " + e.message); go("login"); }
+  }
+}
+
+function bootApp() {
+  renderHomeCats();
+  renderTrending();
+  populatePostCategories();
+  Api.connectWS(onIncomingMessage);
+  go("home");
+  // Lazy load saved set so hearts render correctly
+  Api.saved().then(r => {
+    state.saved = new Set((r.listings || []).map(l => l.id));
+    renderListingsGrid(); // refresh hearts
+  }).catch(() => {});
+}
+
+// =================== Setup screen ===================
+$("#setupSave").onclick = () => {
+  const url = $("#setupUrl").value.trim();
+  if (!/^https?:\/\//i.test(url)) { toast("Enter a full URL (https://…)"); return; }
+  Api.setBase(url);
+  go(Api.token() ? "home" : "login");
+  if (Api.token()) bootApp();
+};
+
+// =================== Login / Signup ===================
+$("#loginGo").onclick = async () => {
+  clearError("loginErr");
+  const email = $("#loginEmail").value.trim();
+  const pass  = $("#loginPass").value;
+  if (!email || !pass) return showError("loginErr", "Enter email and password");
+  try {
+    const r = await Api.login(email, pass);
+    Api.setToken(r.token);
+    Api.setUser(r.user);
+    bootApp();
+  } catch (e) { showError("loginErr", e); }
+};
+
+$("#suGo").onclick = async () => {
+  clearError("suErr");
+  const email = $("#suEmail").value.trim();
+  const user  = $("#suUser").value.trim();
+  const name  = $("#suName").value.trim();
+  const pass  = $("#suPass").value;
+  if (!email || !user || !pass) return showError("suErr", "Email, username and password are required");
+  try {
+    const r = await Api.signup(email, pass, user, name || user);
+    Api.setToken(r.token);
+    Api.setUser(r.user);
+    bootApp();
+  } catch (e) { showError("suErr", e); }
+};
+
+// =================== Home: categories ===================
+function renderHomeCats() {
+  $("#catGrid").innerHTML = CATEGORIES.map(c =>
+    `<button class="cat-tile ${c.id === state.category ? "active" : ""}" data-cat="${c.id}">
+       <span class="ico">${c.ico}</span><span class="nm">${c.name}</span>
+     </button>`).join("");
+  $$("#catGrid [data-cat]").forEach(b => {
+    b.onclick = () => { state.category = b.dataset.cat; renderHomeCats(); loadHomeListings(); };
+  });
+}
+function renderTrending() {
+  $("#trendingGrid").innerHTML = CATEGORIES.slice(1, 7).map(c =>
+    `<button class="cat-tile" data-tcat="${c.id}">
+       <span class="ico">${c.ico}</span><span class="nm">${c.name}</span>
+     </button>`).join("");
+  $$("#trendingGrid [data-tcat]").forEach(b => {
+    b.onclick = () => { state.category = b.dataset.tcat; go("home"); renderHomeCats(); };
+  });
+}
+function populatePostCategories() {
+  const sel = $("#poCategory");
+  sel.innerHTML = CATEGORIES.slice(1).map(c => `<option value="${c.id}">${c.name}</option>`).join("");
+}
+
+// =================== Listings ===================
+let _homeListings = [];
+async function loadHomeListings() {
+  const params = { sort: state.sort };
+  if (state.category && state.category !== "all") params.category = state.category;
+  if (state.priceFilter !== "all") params.max_price = parseInt(state.priceFilter, 10);
+  if (state.query) params.q = state.query;
+  try {
+    const r = await Api.listings(params);
+    _homeListings = r.listings || [];
+    renderListingsGrid();
+  } catch (e) {
+    if (e.status === 402) {
+      $("#grid").innerHTML = `<div class="empty">This marketplace is currently premium-only. Contact the admin for access.</div>`;
+    } else {
+      $("#grid").innerHTML = `<div class="empty">Couldn't load listings: ${escHtml(e.message)}</div>`;
+    }
+  }
+}
+
+function cardHtml(it) {
+  const photo = (it.photos && it.photos[0]) || "https://placehold.co/600x600/eee/aaa?text=No+photo";
   const heartOn = state.saved.has(it.id);
+  const where = it.city && it.state ? `${it.city}, ${it.state}` : (it.zip || "Local");
   return `
     <div class="card" data-id="${it.id}">
-      <div class="thumb" style="background-image:url(${it.thumb})"></div>
-      ${withHeart ? `<button class="heart ${heartOn ? "on" : ""}" data-heart="${it.id}" aria-label="Save">${heartOn ? "♥" : "♡"}</button>` : ""}
+      <div class="thumb" style="background-image:url(${escHtml(photo)})"></div>
+      <button class="heart ${heartOn ? "on" : ""}" data-heart="${it.id}" aria-label="Save">${heartOn ? "♥" : "♡"}</button>
       <div class="info">
         <div class="price">${priceLabel(it.price)}</div>
-        <div class="title">${it.title}</div>
-        <div class="meta">${it.miles} mi · ${postedLabel(it.postedDays)}</div>
+        <div class="title">${escHtml(it.title)}</div>
+        <div class="meta">${escHtml(where)} · ${postedFromTs(it.created_at)}</div>
       </div>
     </div>`;
 }
-
 function bindCards(container) {
   container.querySelectorAll(".card").forEach(card => {
     card.addEventListener("click", e => {
       if (e.target.closest("[data-heart]")) return;
       const id = parseInt(card.dataset.id, 10);
-      const it = LISTINGS.find(l => l.id === id);
-      if (it) openDetail(it);
+      openDetailById(id);
     });
   });
   container.querySelectorAll("[data-heart]").forEach(b => {
     b.addEventListener("click", e => {
       e.stopPropagation();
-      const id = parseInt(b.dataset.heart, 10);
-      toggleHeart(id);
+      toggleSaved(parseInt(b.dataset.heart, 10));
     });
   });
 }
-
-// =================== Categories ===================
-function renderHomeCats() {
-  const el = $("#catGrid");
-  el.innerHTML = CATEGORIES.map(c =>
-    `<button class="cat-tile ${c.id === state.category ? "active" : ""}" data-cat="${c.id}">
-       <span class="ico">${c.ico}</span>
-       <span class="nm">${c.name}</span>
-     </button>`).join("");
-  el.querySelectorAll("[data-cat]").forEach(b => {
-    b.addEventListener("click", () => {
-      state.category = b.dataset.cat;
-      renderHomeCats();
-      renderListings();
-    });
-  });
-
-  const sel = $("#postCategory");
-  if (sel && sel.children.length === 0) {
-    for (const c of CATEGORIES.slice(1)) {
-      const o = document.createElement("option");
-      o.value = c.id; o.textContent = c.name;
-      sel.appendChild(o);
-    }
-  }
-}
-
-function renderTrending() {
-  const el = $("#trendingGrid");
-  if (!el) return;
-  const top = CATEGORIES.slice(1, 7);
-  el.innerHTML = top.map(c =>
-    `<button class="cat-tile" data-tcat="${c.id}">
-       <span class="ico">${c.ico}</span>
-       <span class="nm">${c.name}</span>
-     </button>`).join("");
-  el.querySelectorAll("[data-tcat]").forEach(b => {
-    b.addEventListener("click", () => {
-      state.category = b.dataset.tcat;
-      go("home");
-      renderHomeCats();
-      renderListings();
-    });
-  });
-}
-
-// =================== Listings grid ===================
-function renderListings() {
+function renderListingsGrid() {
   const el = $("#grid");
-  const filtered = applyFilters(LISTINGS);
-  if (filtered.length === 0) {
-    el.innerHTML = `<div class="empty">No items match your filters.</div>`;
+  if (_homeListings.length === 0) {
+    el.innerHTML = `<div class="empty">No items yet — try posting something or changing filters.</div>`;
     return;
   }
-  el.innerHTML = filtered.map(it => cardHtml(it)).join("");
+  el.innerHTML = _homeListings.map(cardHtml).join("");
   bindCards(el);
 }
 
-function renderSaved() {
-  const el = $("#savedGrid");
-  if (!el) return;
-  const saved = LISTINGS.filter(l => state.saved.has(l.id));
-  if (saved.length === 0) {
-    el.innerHTML = `<div class="empty">No saved items yet. Tap ♡ on any listing to save it.</div>`;
-  } else {
-    el.innerHTML = saved.map(it => cardHtml(it)).join("");
-    bindCards(el);
-  }
-  $("#savedCount").textContent = String(state.saved.size);
-}
-
-function renderMy() {
-  const el = $("#myListings");
-  if (!el) return;
-  const mine = LISTINGS.slice(0, 4);
-  el.innerHTML = mine.map(it => cardHtml(it, false)).join("");
-  bindCards(el);
-}
-
-function toggleHeart(id) {
-  if (state.saved.has(id)) state.saved.delete(id); else state.saved.add(id);
-  renderListings();
-  renderSaved();
-  renderSearchResults();
-  $("#savedCount").textContent = String(state.saved.size);
-  if (state.view === "detail") {
-    const heart = $("#detailHeart");
-    if (heart) {
-      const on = state.saved.has(id);
-      heart.textContent = on ? "♥" : "♡";
-      heart.classList.toggle("saved", on);
-    }
+async function toggleSaved(id) {
+  const wasSaved = state.saved.has(id);
+  if (wasSaved) state.saved.delete(id); else state.saved.add(id);
+  // Optimistic UI
+  renderListingsGrid();
+  if (state.view === "saved") loadSaved();
+  if ($("#searchResults")) renderSearchResults();
+  try {
+    if (wasSaved) await Api.unsave(id); else await Api.save(id);
+  } catch (e) {
+    // Roll back on error
+    if (wasSaved) state.saved.add(id); else state.saved.delete(id);
+    renderListingsGrid();
+    toast("Couldn't save: " + e.message);
   }
 }
 
 // =================== Detail ===================
-let currentDetailId = null;
+let _currentDetail = null;
+async function openDetailById(id) {
+  try {
+    const r = await Api.listing(id);
+    openDetail(r.listing);
+  } catch (e) { toast("Can't open: " + e.message); }
+}
+
 function openDetail(it) {
-  currentDetailId = it.id;
-  const slides = it.photos.map(src => `<div class="slide" style="background-image:url(${src})"></div>`).join("");
-  const dots = it.photos.map((_, i) => `<span class="dot ${i === 0 ? "active" : ""}"></span>`).join("");
-  const where = state.zip ? `${state.zip.city}, ${state.zip.state}` : "Nearby";
+  _currentDetail = it;
+  const photos = (it.photos && it.photos.length) ? it.photos : ["https://placehold.co/800x600/eee/aaa?text=No+photo"];
+  const slides = photos.map(src => `<div class="slide" style="background-image:url(${escHtml(src)})"></div>`).join("");
+  const dots = photos.map((_, i) => `<span class="dot ${i === 0 ? "active" : ""}"></span>`).join("");
+  const where = it.city && it.state ? `${it.city}, ${it.state}` : (it.zip || "Local");
+  const sellerName = it.seller_name || it.seller_username || "Seller";
 
   $("#detailScroll").innerHTML = `
     <div class="gallery" id="gallery">${slides}</div>
     <div class="dots" id="dots">${dots}</div>
     <div class="detail-body">
       <div class="detail-price">${priceLabel(it.price)}</div>
-      <div class="detail-title">${it.title}</div>
-      <div class="detail-meta">📍 ${where} · ${it.miles} mi · posted ${postedLabel(it.postedDays)}</div>
-
-      <div class="detail-section">
-        <h4>Condition</h4>
-        <p>${it.cond}</p>
-      </div>
-      <div class="detail-section">
-        <h4>Description</h4>
-        <p>${it.desc}</p>
-      </div>
+      <div class="detail-title">${escHtml(it.title)}</div>
+      <div class="detail-meta">📍 ${escHtml(where)} · posted ${postedFromTs(it.created_at)}</div>
+      ${it.condition ? `<div class="detail-section"><h4>Condition</h4><p>${escHtml(it.condition)}</p></div>` : ""}
+      ${it.description ? `<div class="detail-section"><h4>Description</h4><p>${escHtml(it.description)}</p></div>` : ""}
       <div class="seller">
-        <div class="avatar">${it.seller[0]}</div>
-        <div class="who"><b>${it.seller}</b><span>★ ${it.rating} · responds in ~1 hour</span></div>
+        <div class="avatar">${escHtml(sellerName[0] || "?")}</div>
+        <div class="who"><b>${escHtml(sellerName)}</b><span>@${escHtml(it.seller_username || "")}${it.seller_premium ? " · Premium" : ""}</span></div>
       </div>
-    </div>
-  `;
+    </div>`;
 
   const heart = $("#detailHeart");
   const on = state.saved.has(it.id);
   heart.textContent = on ? "♥" : "♡";
-  heart.classList.toggle("saved", on);
-  heart.onclick = () => toggleHeart(it.id);
+  heart.onclick = () => toggleSaved(it.id);
 
   const gallery = $("#gallery");
   const dotEls = $$("#dots .dot");
-  gallery.addEventListener("scroll", () => {
+  gallery.onscroll = () => {
     const idx = Math.round(gallery.scrollLeft / gallery.clientWidth);
     dotEls.forEach((d, i) => d.classList.toggle("active", i === idx));
-  });
+  };
+
+  $("#msgSeller").onclick = () => promptMessageSeller(it, "Hi, is this still available?");
+  $("#makeOffer").onclick = () => {
+    const offer = prompt("Your offer (number)?");
+    if (!offer) return;
+    promptMessageSeller(it, `Would you take $${parseInt(offer, 10)}?`);
+  };
 
   go("detail");
 }
 
-// =================== Search view ===================
-function renderRecents() {
-  const el = $("#recentRow");
-  if (!el) return;
-  el.innerHTML = state.recents.map(r => `<button class="recent" data-recent="${r}">${r}</button>`).join("");
-  el.querySelectorAll("[data-recent]").forEach(b => {
-    b.addEventListener("click", () => {
-      $("#searchInput").value = b.dataset.recent;
-      runSearch(b.dataset.recent);
-    });
-  });
+async function promptMessageSeller(listing, body) {
+  if (!body) return;
+  if (listing.user_id === Api.user().id) { toast("Can't message your own listing"); return; }
+  try {
+    const r = await Api.startConversation(listing.id, body);
+    toast("Message sent");
+    openConversation(r.conversation.id);
+  } catch (e) { toast(e.message); }
 }
 
-function renderSearchResults() {
-  const el = $("#searchResults");
-  if (!el) return;
-  if (!state.query) {
-    el.innerHTML = "";
-    $("#resultsHead").hidden = true;
-    return;
-  }
-  const filtered = applyFilters(LISTINGS);
-  $("#resultsHead").hidden = false;
-  if (filtered.length === 0) {
-    el.innerHTML = `<div class="empty">No items match "${state.query}".</div>`;
-  } else {
-    el.innerHTML = filtered.map(it => cardHtml(it)).join("");
-    bindCards(el);
-  }
+// =================== Saved ===================
+async function loadSaved() {
+  try {
+    const r = await Api.saved();
+    const items = r.listings || [];
+    state.saved = new Set(items.map(l => l.id));
+    const el = $("#savedGrid");
+    if (items.length === 0) {
+      el.innerHTML = `<div class="empty">No saved items yet. Tap ♡ on any listing.</div>`;
+    } else {
+      el.innerHTML = items.map(cardHtml).join("");
+      bindCards(el);
+    }
+    $("#savedCount").textContent = String(items.length);
+  } catch (e) { toast("Saved: " + e.message); }
 }
 
-function runSearch(q) {
-  state.query = q.trim();
+// =================== Search ===================
+let _searchDebounce;
+$("#searchInput").addEventListener("input", e => {
+  state.query = e.target.value.trim();
   $("#clearSearch").hidden = !state.query;
-  renderSearchResults();
-  if (state.query && !state.recents.includes(state.query)) {
-    state.recents.unshift(state.query);
-    state.recents = state.recents.slice(0, 6);
-    renderRecents();
+  clearTimeout(_searchDebounce);
+  _searchDebounce = setTimeout(renderSearchResults, 180);
+});
+$("#clearSearch").onclick = () => { $("#searchInput").value = ""; state.query = ""; $("#clearSearch").hidden = true; renderSearchResults(); };
+
+async function renderSearchResults() {
+  const head = $("#resultsHead");
+  const out  = $("#searchResults");
+  if (!state.query) { head.hidden = true; out.innerHTML = ""; return; }
+  head.hidden = false;
+  try {
+    const r = await Api.listings({ q: state.query, sort: "newest" });
+    const items = r.listings || [];
+    if (items.length === 0) { out.innerHTML = `<div class="empty">No items match "${escHtml(state.query)}".</div>`; return; }
+    out.innerHTML = items.map(cardHtml).join("");
+    bindCards(out);
+  } catch (e) {
+    out.innerHTML = `<div class="empty">${escHtml(e.message)}</div>`;
   }
 }
+
+// =================== Filters ===================
+$("[data-show-filters]").onclick = () => { const r = $("#filterRow"); r.hidden = !r.hidden; };
+$("#sortSel").onchange = e => { state.sort = e.target.value; loadHomeListings(); };
+$$("[data-price]").forEach(b => {
+  b.onclick = () => {
+    state.priceFilter = b.dataset.price;
+    $$("[data-price]").forEach(x => x.classList.toggle("active", x === b));
+    loadHomeListings();
+  };
+});
+
+// =================== Post ===================
+$("#photoInput").addEventListener("change", async e => {
+  const files = Array.from(e.target.files || []);
+  if (files.length === 0) return;
+  const strip = $("#photoStrip");
+  // Show local previews instantly
+  for (const f of files) {
+    const url = URL.createObjectURL(f);
+    const wrap = document.createElement("div");
+    wrap.className = "ph";
+    wrap.style.backgroundImage = `url(${url})`;
+    wrap.innerHTML = `<button title="remove">×</button>`;
+    strip.appendChild(wrap);
+  }
+  try {
+    const r = await Api.uploadPhotos(files);
+    state.postPhotos.push(...(r.urls || []));
+    // Replace local previews with server URLs
+    const phs = strip.querySelectorAll(".ph");
+    phs.forEach((ph, i) => {
+      const url = state.postPhotos[i];
+      if (url) {
+        ph.style.backgroundImage = `url(${url})`;
+        ph.querySelector("button").onclick = () => {
+          const idx = Array.from(strip.children).indexOf(ph);
+          state.postPhotos.splice(idx, 1);
+          ph.remove();
+        };
+      }
+    });
+  } catch (e) {
+    toast("Upload failed: " + e.message);
+    strip.innerHTML = "";
+  }
+  e.target.value = "";
+});
+
+$("#postPublish").onclick = async () => {
+  clearError("poErr");
+  const title = $("#poTitle").value.trim();
+  const price = parseInt($("#poPrice").value, 10);
+  const category = $("#poCategory").value;
+  const condition = $("#poCond").value;
+  const description = $("#poDesc").value.trim();
+  const zip = $("#poZip").value.trim();
+  if (!title || isNaN(price) || price < 0) return showError("poErr", "Title and a valid price are required.");
+  try {
+    await Api.createListing({
+      title, price, category, condition, description, zip,
+      photo_urls: state.postPhotos.slice()
+    });
+    toast("Listed!");
+    // Reset form
+    $("#poTitle").value = ""; $("#poPrice").value = ""; $("#poDesc").value = ""; $("#poZip").value = "";
+    $("#photoStrip").innerHTML = "";
+    state.postPhotos = [];
+    go("home");
+    loadHomeListings();
+  } catch (e) { showError("poErr", e); }
+};
 
 // =================== Inbox ===================
-function renderConvs() {
-  const el = $("#convList");
-  if (!el) return;
-  el.innerHTML = CONVS.map(c => {
-    const it = LISTINGS.find(l => l.id === c.listingId);
-    if (!it) return "";
-    return `
-      <li class="conv ${c.unread ? "unread" : ""}" data-conv-item="${it.id}">
-        <div class="ph" style="background-image:url(${it.thumb})"></div>
-        <div class="body">
-          <div class="head"><b>${c.name}</b><span class="when">${c.when}</span></div>
-          <div class="item">${it.title}</div>
-          <div class="last">${c.last}</div>
-        </div>
-      </li>`;
-  }).join("");
-  el.querySelectorAll("[data-conv-item]").forEach(li => {
-    li.addEventListener("click", () => {
-      const id = parseInt(li.dataset.convItem, 10);
-      const it = LISTINGS.find(l => l.id === id);
-      if (it) openDetail(it);
+async function loadInbox() {
+  try {
+    const r = await Api.conversations();
+    const convs = r.conversations || [];
+    const el = $("#convList");
+    if (convs.length === 0) { el.innerHTML = `<div class="empty" style="padding:40px 20px;text-align:center;color:var(--muted)">No messages yet.</div>`; return; }
+    el.innerHTML = convs.map(c => {
+      const photo = c.listing_photo || "https://placehold.co/120x120/eee/aaa?text=?";
+      const when = c.last_at ? postedFromTs(c.last_at) : postedFromTs(c.created_at);
+      return `
+        <li class="conv ${c.unread > 0 ? "unread" : ""}" data-conv="${c.id}">
+          <div class="ph" style="background-image:url(${escHtml(photo)})"></div>
+          <div class="body">
+            <div class="head"><b>${escHtml(c.other.name || c.other.username || "User")}</b><span class="when">${when}</span></div>
+            <div class="item">${escHtml(c.listing_title || "")}</div>
+            <div class="last">${escHtml(c.last_body || "(no messages yet)")}</div>
+          </div>
+        </li>`;
+    }).join("");
+    el.querySelectorAll("[data-conv]").forEach(li => {
+      li.onclick = () => openConversation(parseInt(li.dataset.conv, 10));
     });
-  });
+  } catch (e) {
+    $("#convList").innerHTML = `<div class="empty" style="padding:40px 20px;text-align:center;color:var(--muted)">${escHtml(e.message)}</div>`;
+  }
 }
 
-// =================== View routing ===================
-const viewStack = ["home"];
-function go(view) {
-  if (view !== state.view) viewStack.push(view);
-  state.view = view;
-  $$(".view").forEach(v => v.hidden = v.dataset.view !== view);
-  $$(".tab").forEach(t => t.classList.toggle("active", t.dataset.go === view));
-  if (view === "search") setTimeout(() => $("#searchInput").focus(), 80);
-  if (view === "saved") renderSaved();
+async function openConversation(id) {
+  state.currentConv = id;
+  try {
+    const conv = (await Api.conversations()).conversations.find(c => c.id === id);
+    const r = await Api.messages(id);
+    renderConv(conv, r.messages || []);
+    go("conv");
+  } catch (e) { toast(e.message); }
 }
 
-document.addEventListener("click", (e) => {
-  const back = e.target.closest("[data-back]");
-  if (back) {
-    viewStack.pop();
-    const prev = viewStack[viewStack.length - 1] || "home";
-    go(prev);
-    return;
+function renderConv(conv, msgs) {
+  if (conv) {
+    $("#convHeader").innerHTML = `<b>${escHtml(conv.other.name || conv.other.username || "User")}</b><span>${escHtml(conv.listing_title || "")}</span>`;
   }
-  const dest = e.target.closest("[data-go]");
-  if (dest) {
-    go(dest.dataset.go);
-    return;
+  const me = Api.user().id;
+  const scroll = $("#msgScroll");
+  scroll.innerHTML = msgs.map(m => {
+    const cls = m.sender_id === me ? "me" : "them";
+    return `<div class="msg-bubble ${cls}">${escHtml(m.body)}</div>`;
+  }).join("");
+  setTimeout(() => { scroll.scrollTop = scroll.scrollHeight; }, 0);
+}
+
+$("#msgForm").onsubmit = async e => {
+  e.preventDefault();
+  const input = $("#msgInput");
+  const body = input.value.trim();
+  if (!body || !state.currentConv) return;
+  input.value = "";
+  try {
+    const r = await Api.sendMessage(state.currentConv, body);
+    const scroll = $("#msgScroll");
+    scroll.insertAdjacentHTML("beforeend", `<div class="msg-bubble me">${escHtml(body)}</div>`);
+    scroll.scrollTop = scroll.scrollHeight;
+  } catch (e) { toast(e.message); input.value = body; }
+};
+
+function onIncomingMessage(payload) {
+  if (payload.type !== "message") return;
+  if (state.view === "conv" && state.currentConv === payload.conversation_id) {
+    const scroll = $("#msgScroll");
+    scroll.insertAdjacentHTML("beforeend", `<div class="msg-bubble them">${escHtml(payload.message.body)}</div>`);
+    scroll.scrollTop = scroll.scrollHeight;
+  } else {
+    toast("New message");
   }
+}
+
+// =================== Profile ===================
+async function renderProfile() {
+  const u = Api.user();
+  if (!u) return;
+  $("#profAvatar").textContent = (u.display_name || u.username || "?")[0].toUpperCase();
+  $("#profName").textContent = u.display_name || u.username;
+  $("#profMeta").textContent = "@" + u.username + (u.is_admin ? " · admin" : "");
+  $("#profPremium").textContent = u.is_premium ? "Pro" : "Free";
+  $("#adminEntry").hidden = !u.is_admin;
+  try {
+    const r = await Api.myListings();
+    const items = r.listings || [];
+    $("#profListed").textContent = items.length;
+    const el = $("#myListings");
+    if (items.length === 0) {
+      el.innerHTML = `<div class="empty">No listings yet. Tap + to create one.</div>`;
+    } else {
+      el.innerHTML = items.map(cardHtml).join("");
+      bindCards(el);
+    }
+  } catch {}
+  try {
+    const r = await Api.saved();
+    state.saved = new Set((r.listings || []).map(l => l.id));
+    $("#savedCount").textContent = String(state.saved.size);
+  } catch {}
+}
+
+$("#logoutBtn").onclick = () => {
+  if (!confirm("Sign out?")) return;
+  Api.logout();
+  go("login");
+};
+
+// =================== Admin ===================
+async function loadAdmin() {
+  try {
+    const s = await Api.adminStats();
+    const stats = s.stats;
+    $("#adminStats").innerHTML = [
+      ["Users", stats.users],
+      ["Premium", stats.premium_users],
+      ["Active listings", stats.listings_active],
+      ["Total listings", stats.listings_total],
+      ["Conversations", stats.conversations],
+      ["Messages", stats.messages],
+      ["Sign-ups (24h)", stats.sign_ups_24h],
+      ["Listings (24h)", stats.listings_24h],
+    ].map(([k, v]) => `<div class="card-stat"><b>${v}</b><span>${k}</span></div>`).join("");
+    $$('input[name="mode"]').forEach(r => r.checked = (r.value === s.mode));
+  } catch (e) { toast("Admin: " + e.message); }
+  loadAdminUsers("");
+}
+
+$("#modeSave").onclick = async () => {
+  const mode = $$('input[name="mode"]').find(r => r.checked)?.value;
+  if (!mode) return;
+  try { await Api.adminUpdateSettings({ mode }); toast("Mode set: " + mode); }
+  catch (e) { toast(e.message); }
+};
+
+let _adminUserDebounce;
+$("#adminUserSearch").addEventListener("input", e => {
+  clearTimeout(_adminUserDebounce);
+  _adminUserDebounce = setTimeout(() => loadAdminUsers(e.target.value), 200);
 });
 
-// =================== Filter row toggle ===================
-$("[data-show-filters]").addEventListener("click", () => {
-  const row = $("#filterRow");
-  row.hidden = !row.hidden;
-});
-
-$("#sortSel").addEventListener("change", e => {
-  state.sort = e.target.value;
-  renderListings();
-});
-
-document.querySelectorAll("[data-price]").forEach(b => {
-  if (b.dataset.price === state.priceFilter) b.classList.add("active");
-  b.addEventListener("click", () => {
-    state.priceFilter = b.dataset.price;
-    document.querySelectorAll("[data-price]").forEach(x => x.classList.toggle("active", x === b));
-    renderListings();
-  });
-});
-
-// =================== Search input ===================
-$("#searchInput").addEventListener("input", e => runSearch(e.target.value));
-$("#clearSearch").addEventListener("click", () => {
-  $("#searchInput").value = "";
-  $("#clearSearch").hidden = true;
-  runSearch("");
-});
+async function loadAdminUsers(q) {
+  try {
+    const r = await Api.adminUsers(q);
+    const users = r.users || [];
+    const el = $("#adminUserList");
+    if (users.length === 0) { el.innerHTML = `<div class="muted" style="padding:14px">No users.</div>`; return; }
+    el.innerHTML = users.map(u => {
+      const badges = [
+        u.is_admin ? `<span class="badge admin">admin</span>` : "",
+        u.is_premium ? `<span class="badge">premium</span>` : ""
+      ].join("");
+      return `
+        <div class="user-row" data-uid="${u.id}">
+          <div class="who"><b>${escHtml(u.display_name || u.username)}</b><span>@${escHtml(u.username)} · ${escHtml(u.email)}</span></div>
+          <div class="badges">${badges}</div>
+          <div class="actions">
+            <button data-act="premium" data-on="${u.is_premium ? 0 : 1}">${u.is_premium ? "Remove ★" : "Grant ★"}</button>
+            <button data-act="admin" data-on="${u.is_admin ? 0 : 1}">${u.is_admin ? "Demote" : "Make admin"}</button>
+          </div>
+        </div>`;
+    }).join("");
+    el.querySelectorAll(".user-row").forEach(row => {
+      const uid = parseInt(row.dataset.uid, 10);
+      row.querySelectorAll("[data-act]").forEach(b => {
+        b.onclick = async () => {
+          const act = b.dataset.act;
+          const on = b.dataset.on === "1";
+          const patch = act === "premium" ? { is_premium: on } : { is_admin: on };
+          try { await Api.adminUpdateUser(uid, patch); loadAdminUsers($("#adminUserSearch").value); }
+          catch (e) { toast(e.message); }
+        };
+      });
+    });
+  } catch (e) { toast(e.message); }
+}
 
 // =================== ZIP picker ===================
 async function loadZips() {
@@ -436,40 +625,29 @@ async function loadZips() {
   state.zips = raw.map(r => ({ zip: r[0], city: r[1], state: r[2], county: r[3], lat: r[4], lng: r[5] }));
   return state.zips;
 }
-
-const zipModal  = $("#zipModal");
-const zipList   = $("#zipList");
-const zipSearch = $("#zipSearch");
-
+const zipModal = $("#zipModal"), zipList = $("#zipList"), zipSearch = $("#zipSearch");
 $("#locChip").onclick = async () => {
-  zipModal.hidden = false;
-  zipSearch.value = "";
-  zipSearch.focus();
+  zipModal.hidden = false; zipSearch.value = ""; zipSearch.focus();
   const zips = await loadZips();
   renderZipList(zips.slice(0, 50));
 };
 $("#zipClose").onclick = () => zipModal.hidden = true;
-
 function renderZipList(items) {
-  if (items.length === 0) {
-    zipList.innerHTML = `<li class="empty">No matches.</li>`;
-    return;
-  }
+  if (items.length === 0) { zipList.innerHTML = `<li class="empty">No matches.</li>`; return; }
   zipList.innerHTML = items.slice(0, 200).map(z =>
-    `<li data-zip="${z.zip}" data-city="${z.city}" data-state="${z.state}">
-       <span class="city">${z.city}, ${z.state}</span>
+    `<li data-zip="${z.zip}" data-city="${escHtml(z.city)}" data-state="${z.state}">
+       <span class="city">${escHtml(z.city)}, ${z.state}</span>
        <span class="zip-code">${z.zip}</span>
      </li>`).join("");
 }
-
-zipList.addEventListener("click", e => {
+zipList.addEventListener("click", async e => {
   const li = e.target.closest("li");
   if (!li || !li.dataset.zip) return;
-  state.zip = { zip: li.dataset.zip, city: li.dataset.city, state: li.dataset.state };
-  $("#locLabel").textContent = `${state.zip.city}, ${state.zip.state}  ${state.zip.zip}`;
+  const zip = li.dataset.zip, city = li.dataset.city, st = li.dataset.state;
+  $("#locLabel").textContent = `${city}, ${st}  ${zip}`;
   zipModal.hidden = true;
+  try { await Api.put("/api/profile/me", { zip, city, state: st }); } catch {}
 });
-
 let zipDebounce;
 zipSearch.addEventListener("input", () => {
   clearTimeout(zipDebounce);
@@ -479,10 +657,8 @@ zipSearch.addEventListener("input", () => {
     if (!q) return renderZipList(zips.slice(0, 50));
     const matches = [];
     for (const z of zips) {
-      if (z.zip.startsWith(q) ||
-          z.city.toLowerCase().startsWith(q) ||
-          z.state.toLowerCase() === q ||
-          (z.city + ", " + z.state).toLowerCase().includes(q)) {
+      if (z.zip.startsWith(q) || z.city.toLowerCase().startsWith(q) ||
+          z.state.toLowerCase() === q || (z.city + ", " + z.state).toLowerCase().includes(q)) {
         matches.push(z);
         if (matches.length >= 200) break;
       }
@@ -491,12 +667,5 @@ zipSearch.addEventListener("input", () => {
   }, 80);
 });
 
-// =================== Boot ===================
-renderHomeCats();
-renderTrending();
-renderRecents();
-renderListings();
-renderSaved();
-renderMy();
-renderConvs();
-go("home");
+// =================== Go ===================
+boot();
