@@ -245,7 +245,8 @@ function renderHomeCats() {
   } else if (state.section === "services") {
     cats = [{ id:"all", name:"All services", ico:"✨" }, ...SUBCATEGORIES.services];
   } else {
-    cats = CATEGORIES; // default unfiltered
+    // No section selected — show all categories EXCEPT "services" (services has its own top tile)
+    cats = CATEGORIES.filter(c => c.id !== "services");
   }
   // Determine active tile id
   const activeId = state.section === "services"
@@ -336,8 +337,10 @@ function syncPostServiceFields() {
 let _homeListings = [];
 async function loadHomeListings() {
   const params = { sort: state.sort };
+  // Section is a coarse filter (backend handles the != / = on category)
+  if (state.section) params.section = state.section;
+  // Specific category drill-down within a section
   if (state.section === "services") {
-    params.category = "services";
     if (state.subcategory) params.subcategory = state.subcategory;
   } else if (state.section === "sale") {
     if (state.category && state.category !== "all") params.category = state.category;
