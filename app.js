@@ -159,6 +159,7 @@ async function boot() {
 }
 
 function bootApp() {
+  renderSectionTiles();
   renderHomeCats();
   renderTrending();
   populatePostCategories();
@@ -209,18 +210,61 @@ $("#suGo").onclick = async () => {
   } catch (e) { showError("suErr", e); }
 };
 
-// =================== Home: categories ===================
+// =================== Home: section tiles + categories ===================
+const SALE_CATEGORIES = CATEGORIES.filter(c => !["all","services"].includes(c.id));
+
+function renderSectionTiles() {
+  const tiles = $("#sectionGrid");
+  if (!tiles) return;
+  tiles.querySelectorAll("[data-section]").forEach(b => {
+    b.classList.toggle("active", state.section === b.dataset.section);
+    b.onclick = () => {
+      state.section = state.section === b.dataset.section ? "" : b.dataset.section;
+      state.category = "all";
+      state.subcategory = "";
+      renderSectionTiles();
+      renderHomeCats();
+      loadHomeListings();
+    };
+  });
+  const heading = $("#catHeading");
+  if (heading) {
+    if (state.section === "sale")          heading.textContent = "🛍️ For Sale categories";
+    else if (state.section === "services") heading.textContent = "🛠️ Service categories";
+    else                                   heading.textContent = "Browse categories";
+  }
+}
+
 function renderHomeCats() {
   const grid = $("#catGrid");
   if (!grid) return;
-  grid.innerHTML = CATEGORIES.map(c =>
-    `<button class="cat-tile ${c.id === state.category ? "active" : ""}" data-cat="${c.id}">
+  // Pick category set based on section
+  let cats;
+  if (state.section === "sale") {
+    cats = [{ id:"all", name:"All for sale", ico:"✨" }, ...SALE_CATEGORIES];
+  } else if (state.section === "services") {
+    cats = [{ id:"all", name:"All services", ico:"✨" }, ...SUBCATEGORIES.services];
+  } else {
+    cats = CATEGORIES; // default unfiltered
+  }
+  // Determine active tile id
+  const activeId = state.section === "services"
+    ? (state.subcategory || "all")
+    : (state.category || "all");
+  grid.innerHTML = cats.map(c =>
+    `<button class="cat-tile ${c.id === activeId ? "active" : ""}" data-cat="${c.id}">
        <span class="ico">${c.ico}</span><span class="nm">${c.name}</span>
      </button>`).join("");
   grid.querySelectorAll("[data-cat]").forEach(b => {
     b.onclick = () => {
-      state.category = b.dataset.cat;
-      state.subcategory = "";
+      const id = b.dataset.cat;
+      if (state.section === "services") {
+        state.category = "services";
+        state.subcategory = id === "all" ? "" : id;
+      } else {
+        state.category = id;
+        state.subcategory = "";
+      }
       renderHomeCats();
       renderSubcatChips();
       loadHomeListings();
@@ -229,7 +273,9 @@ function renderHomeCats() {
   renderSubcatChips();
 }
 
-// Subcategory chips strip — appears under the category grid when current category has subcategories
+// Subcategory chips: only show when user is in default browse mode AND clicked Services category.
+// In the section-aware layout, when state.section is set, the category grid IS the subcategory grid,
+// so chips are redundant and stay hidden.
 function renderSubcatChips() {
   let host = $("#subcatChips");
   if (!host) {
@@ -240,7 +286,7 @@ function renderSubcatChips() {
     host.className = "subcat-chips";
     grid.parentNode.insertBefore(host, grid.nextSibling);
   }
-  const subs = SUBCATEGORIES[state.category];
+  const subs = state.section ? null : SUBCATEGORIES[state.category];
   if (!subs) { host.innerHTML = ""; host.hidden = true; return; }
   host.hidden = false;
   host.innerHTML =
@@ -290,8 +336,15 @@ function syncPostServiceFields() {
 let _homeListings = [];
 async function loadHomeListings() {
   const params = { sort: state.sort };
-  if (state.category && state.category !== "all") params.category = state.category;
-  if (state.subcategory) params.subcategory = state.subcategory;
+  if (state.section === "services") {
+    params.category = "services";
+    if (state.subcategory) params.subcategory = state.subcategory;
+  } else if (state.section === "sale") {
+    if (state.category && state.category !== "all") params.category = state.category;
+  } else {
+    if (state.category && state.category !== "all") params.category = state.category;
+    if (state.subcategory) params.subcategory = state.subcategory;
+  }
   if (state.priceFilter !== "all") params.max_price = parseInt(state.priceFilter, 10);
   if (state.query) params.q = state.query;
   try {

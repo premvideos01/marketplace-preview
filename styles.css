@@ -515,3 +515,24 @@ html, body { margin: 0; padding: 0; background: #efeff3; color: var(--text); fon
   .big-section .big-ico  { font-size:30px; }
   .big-section .big-name { font-size:16px; }
 }
+
+/* ============ Top section tiles (For Sale / Services) ============ */
+.cat-grid.section-grid {
+  grid-template-columns: 1fr 1fr;       /* two big tiles */
+  margin: 12px 0 6px;
+  padding: 0 14px;
+}
+.cat-tile.big {
+  padding: 22px 6px;
+  font-size: 16px;
+  gap: 8px;
+  border: 2px solid var(--line, #e5e5e5);
+  background: var(--bg-alt);
+}
+.cat-tile.big .ico { font-size: 38px; }
+.cat-tile.big .nm  { font-size: 16px; font-weight: 600; }
+.cat-tile.big.active {
+  background: var(--text);
+  color: #fff;
+  border-color: var(--text);
+}
