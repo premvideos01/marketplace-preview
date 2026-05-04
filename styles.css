@@ -430,3 +430,59 @@ html, body { margin: 0; padding: 0; background: #efeff3; color: var(--text); fon
   from { opacity: 0; transform: translate(-50%, -8px); }
   to   { opacity: 1; transform: translate(-50%, 0); }
 }
+
+/* ============ Service section additions ============ */
+.subcat-chips { display:flex; gap:8px; flex-wrap:wrap; padding:8px 16px 12px; overflow-x:auto; }
+.subcat-chips .chip {
+  border:1px solid var(--line, #ddd); background:#fff; color:#333;
+  padding:6px 12px; border-radius:999px; cursor:pointer; font-size:13px; white-space:nowrap;
+}
+.subcat-chips .chip.active { background:#111; color:#fff; border-color:#111; }
+.subcat-chips .chip:hover { background:#f4f4f4; }
+.subcat-chips .chip.active:hover { background:#000; }
+
+.subtag { font-size:11px; padding:2px 8px; border-radius:999px; background:#eef; color:#447; margin-right:6px; }
+.rating-pill { font-size:12px; color:#555; }
+
+.kv { width:100%; border-collapse:collapse; font-size:14px; }
+.kv td { padding:6px 4px; vertical-align:top; }
+.kv td:first-child { color:#666; width:40%; }
+
+.reviews { list-style:none; padding:0; margin:0; }
+.reviews li { padding:10px 0; border-bottom:1px solid var(--line,#eee); }
+.reviews li:last-child { border-bottom:0; }
+.reviews .r-head { font-size:13px; color:#333; }
+.reviews .r-body { font-size:14px; color:#555; margin-top:4px; }
+
+/* Booking modal */
+.modal {
+  position:fixed; inset:0; background:rgba(0,0,0,0.5); display:flex; align-items:center; justify-content:center;
+  z-index:1000; padding:20px;
+}
+.modal[hidden] { display:none; }
+.modal-card {
+  background:#fff; border-radius:14px; padding:20px; max-width:420px; width:100%;
+  max-height:90vh; overflow-y:auto;
+}
+.modal-card h3 { margin:0 0 4px; }
+.modal-card .field { display:block; margin:12px 0; }
+.modal-card .field span { display:block; font-size:13px; color:#666; margin-bottom:4px; }
+.modal-card .field input, .modal-card .field textarea, .modal-card .field select {
+  width:100%; padding:10px; border:1px solid var(--line,#ddd); border-radius:8px; font-size:15px; box-sizing:border-box;
+}
+.modal-actions { display:flex; gap:10px; justify-content:flex-end; margin-top:16px; }
+
+/* ============ Bookings list ============ */
+.bookings-tabs { display:flex; gap:8px; padding:0 16px 8px; }
+.bookings { list-style:none; padding:0; margin:0 16px; }
+.booking { padding:12px; border:1px solid var(--line,#eee); border-radius:10px; margin-bottom:10px; }
+.booking .b-head { display:flex; justify-content:space-between; align-items:center; }
+.booking .b-meta { color:#666; font-size:13px; margin-top:4px; }
+.booking .b-msg  { color:#333; font-size:14px; margin-top:6px; padding:8px; background:#fafafa; border-radius:6px; }
+.booking .b-actions { display:flex; gap:8px; margin-top:10px; flex-wrap:wrap; }
+.status { font-size:11px; padding:3px 9px; border-radius:999px; text-transform:capitalize; }
+.status-pending   { background:#fff3cd; color:#856404; }
+.status-accepted  { background:#d4edda; color:#155724; }
+.status-completed { background:#d1ecf1; color:#0c5460; }
+.status-declined  { background:#f8d7da; color:#721c24; }
+.status-cancelled { background:#e2e3e5; color:#383d41; }

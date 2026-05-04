@@ -154,6 +154,53 @@
         </label>
         <label class="field"><span>Description</span><textarea id="poDesc" rows="4" placeholder="Tell buyers about it…"></textarea></label>
         <label class="field"><span>Location (ZIP)</span><input id="poZip" type="text" inputmode="numeric" maxlength="5" placeholder="ZIP code"></label>
+
+        <!-- Service-only fields (shown when category=services) -->
+        <div id="serviceFields" hidden>
+          <hr style="margin:18px 0;border:0;border-top:1px solid var(--line,#eee)">
+          <div class="muted" style="margin-bottom:8px">🛠️ Service details</div>
+          <label class="field"><span>Subcategory</span>
+            <select id="poSubcat"></select>
+          </label>
+          <label class="field"><span>Pricing model</span>
+            <select id="poPricing">
+              <option value="hourly">Hourly rate</option>
+              <option value="flat">Flat fee</option>
+              <option value="quote">Request a quote</option>
+              <option value="package">Package / bundle</option>
+            </select>
+          </label>
+          <label class="field"><span>Service area (miles from your ZIP)</span>
+            <input id="poRadius" type="number" min="0" max="500" placeholder="e.g. 25">
+          </label>
+          <label class="field"><span>Years of experience</span>
+            <input id="poExperience" type="number" min="0" max="80" placeholder="e.g. 5">
+          </label>
+          <div class="field">
+            <span>Availability (days you offer)</span>
+            <div id="poDays" style="display:flex;gap:6px;flex-wrap:wrap;margin-top:6px">
+              <label><input type="checkbox" value="mon"> Mon</label>
+              <label><input type="checkbox" value="tue"> Tue</label>
+              <label><input type="checkbox" value="wed"> Wed</label>
+              <label><input type="checkbox" value="thu"> Thu</label>
+              <label><input type="checkbox" value="fri"> Fri</label>
+              <label><input type="checkbox" value="sat"> Sat</label>
+              <label><input type="checkbox" value="sun"> Sun</label>
+            </div>
+          </div>
+          <label class="field"><span>Hours (e.g. 9:00–17:00)</span>
+            <input id="poHours" type="text" placeholder="9:00–17:00">
+          </label>
+          <div class="field">
+            <span>Credentials</span>
+            <div style="display:flex;gap:14px;flex-wrap:wrap;margin-top:6px">
+              <label><input type="checkbox" id="poLicensed"> Licensed</label>
+              <label><input type="checkbox" id="poInsured">  Insured</label>
+              <label><input type="checkbox" id="poBonded">   Bonded</label>
+            </div>
+          </div>
+        </div>
+
         <div class="error" id="poErr" hidden></div>
       </main>
     </section>
@@ -209,6 +256,12 @@
         </div>
         <h3 class="section-h">My listings</h3>
         <div class="grid" id="myListings"></div>
+        <h3 class="section-h">My bookings</h3>
+        <div class="bookings-tabs">
+          <button class="chip active" data-bk-role="buyer">As buyer</button>
+          <button class="chip" data-bk-role="seller">As seller</button>
+        </div>
+        <ul class="bookings" id="bookingsList"></ul>
         <h3 class="section-h">Settings</h3>
         <ul class="menu">
           <li id="adminEntry" hidden data-go="admin">Admin dashboard<span class="caret">›</span></li>

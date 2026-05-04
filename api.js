@@ -6,7 +6,15 @@ const LS_TOKEN = "mkt.token";
 const LS_USER  = "mkt.user";
 
 const Api = {
-  base() { return localStorage.getItem(LS_API) || ""; },
+  base() {
+    const stored = localStorage.getItem(LS_API);
+    if (stored) return stored;
+    // Auto-detect: if served from a non-GitHub-Pages origin, assume backend is same origin
+    if (location.hostname !== "premvideos01.github.io" && location.hostname !== "") {
+      return location.origin;
+    }
+    return "";
+  },
   setBase(url) {
     url = String(url || "").trim().replace(/\/$/, "");
     if (url) localStorage.setItem(LS_API, url); else localStorage.removeItem(LS_API);
@@ -88,6 +96,15 @@ const Api = {
   messages(convId) { return this.get("/api/conversations/" + convId + "/messages"); },
   startConversation(listing_id, body) { return this.post("/api/conversations", { listing_id, body }); },
   sendMessage(conversation_id, body) { return this.post("/api/messages", { conversation_id, body }); },
+
+  // Bookings (services)
+  createBooking(data)              { return this.post("/api/bookings", data); },
+  updateBooking(id, patch)         { return this.request("PATCH", "/api/bookings/" + id, patch); },
+  myBookings(role = "buyer")       { return this.get("/api/bookings/mine?role=" + encodeURIComponent(role)); },
+
+  // Reviews (services)
+  createReview(data)               { return this.post("/api/reviews", data); },
+  reviewsForUser(userId)           { return this.get("/api/reviews/user/" + userId); },
 
   // Admin
   adminStats()       { return this.get("/api/admin/stats"); },

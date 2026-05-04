@@ -38,6 +38,32 @@ const CATEGORIES = [
 ];
 const CAT_ICON = Object.fromEntries(CATEGORIES.map(c => [c.id, c.ico]));
 
+// Subcategories per top-level category. Currently only "services" uses them.
+const SUBCATEGORIES = {
+  services: [
+    { id: "cleaning",       name: "Cleaning",                ico: "🧹" },
+    { id: "yard",           name: "Yard & landscaping",      ico: "🌿" },
+    { id: "handyman",       name: "Handyman",                ico: "🔧" },
+    { id: "plumbing",       name: "Plumbing",                ico: "🚿" },
+    { id: "electrical",     name: "Electrical",              ico: "⚡" },
+    { id: "auto-service",   name: "Auto service",            ico: "🛠️" },
+    { id: "pet-service",    name: "Pet services",            ico: "🐶" },
+    { id: "fitness",        name: "Personal training",       ico: "🏋️" },
+    { id: "beauty-service", name: "Beauty (mobile)",         ico: "💆" },
+    { id: "events",         name: "Event services",          ico: "📸" },
+    { id: "tutoring",       name: "Tutoring & lessons",      ico: "🎓" },
+    { id: "childcare",      name: "Childcare & sitting",     ico: "👶" },
+    { id: "moving",         name: "Moving & labor",          ico: "📦" },
+    { id: "tech",           name: "Tech & computer",         ico: "💻" },
+    { id: "professional",   name: "Professional services",   ico: "📊" },
+    { id: "design",         name: "Design & creative",       ico: "✏️" },
+  ],
+};
+const SUBCAT_BY_ID = Object.fromEntries(
+  Object.entries(SUBCATEGORIES).flatMap(([cat, subs]) => subs.map(s => [s.id, { ...s, parent: cat }]))
+);
+function subcatLabel(id) { return SUBCAT_BY_ID[id] ? `${SUBCAT_BY_ID[id].ico} ${SUBCAT_BY_ID[id].name}` : ""; }
+
 // =================== State ===================
 const state = {
   view: "home",
@@ -48,6 +74,7 @@ const state = {
   sort: "newest",
   priceFilter: "all",
   postPhotos: [],     // uploaded photo URLs
+  subcategory: "",    // active subcategory filter (services only for now)
   currentConv: null,  // open conversation
   viewStack: ["home"]
 };
@@ -188,7 +215,38 @@ function renderHomeCats() {
        <span class="ico">${c.ico}</span><span class="nm">${c.name}</span>
      </button>`).join("");
   $$("#catGrid [data-cat]").forEach(b => {
-    b.onclick = () => { state.category = b.dataset.cat; renderHomeCats(); loadHomeListings(); };
+    b.onclick = () => {
+      state.category = b.dataset.cat;
+      state.subcategory = "";  // reset on category change
+      renderHomeCats();
+      renderSubcatChips();
+      loadHomeListings();
+    };
+  });
+  renderSubcatChips();
+}
+
+// Subcategory chips appear under the category grid when current category has subcategories
+function renderSubcatChips() {
+  let host = $("#subcatChips");
+  if (!host) {
+    const grid = $("#catGrid");
+    if (!grid) return;
+    host = document.createElement("div");
+    host.id = "subcatChips";
+    host.className = "subcat-chips";
+    grid.parentNode.insertBefore(host, grid.nextSibling);
+  }
+  const subs = SUBCATEGORIES[state.category];
+  if (!subs) { host.innerHTML = ""; host.hidden = true; return; }
+  host.hidden = false;
+  host.innerHTML =
+    `<button class="chip ${!state.subcategory ? "active" : ""}" data-sub="">All ${state.category}</button>` +
+    subs.map(s =>
+      `<button class="chip ${state.subcategory === s.id ? "active" : ""}" data-sub="${s.id}">${s.ico} ${s.name}</button>`
+    ).join("");
+  host.querySelectorAll("[data-sub]").forEach(b => {
+    b.onclick = () => { state.subcategory = b.dataset.sub; renderSubcatChips(); loadHomeListings(); };
   });
 }
 function renderTrending() {
@@ -203,6 +261,26 @@ function renderTrending() {
 function populatePostCategories() {
   const sel = $("#poCategory");
   sel.innerHTML = CATEGORIES.slice(1).map(c => `<option value="${c.id}">${c.name}</option>`).join("");
+  sel.onchange = () => syncPostServiceFields();
+  syncPostServiceFields();
+}
+
+// Show/hide service-specific fields and populate the subcategory dropdown based on category
+function syncPostServiceFields() {
+  const cat = $("#poCategory")?.value;
+  const sf = $("#serviceFields");
+  const sub = $("#poSubcat");
+  if (!sf || !sub) return;
+  if (cat === "services") {
+    sf.hidden = false;
+    if (!sub.options.length) {
+      sub.innerHTML = SUBCATEGORIES.services.map(s =>
+        `<option value="${s.id}">${s.ico} ${s.name}</option>`
+      ).join("");
+    }
+  } else {
+    sf.hidden = true;
+  }
 }
 
 // =================== Listings ===================
@@ -210,6 +288,7 @@ let _homeListings = [];
 async function loadHomeListings() {
   const params = { sort: state.sort };
   if (state.category && state.category !== "all") params.category = state.category;
+  if (state.subcategory) params.subcategory = state.subcategory;
   if (state.priceFilter !== "all") params.max_price = parseInt(state.priceFilter, 10);
   if (state.query) params.q = state.query;
   try {
@@ -229,16 +308,46 @@ function cardHtml(it) {
   const photo = (it.photos && it.photos[0]) || "https://placehold.co/600x600/eee/aaa?text=No+photo";
   const heartOn = state.saved.has(it.id);
   const where = it.city && it.state ? `${it.city}, ${it.state}` : (it.zip || "Local");
+  const isService = it.category === "services";
+  const priceTxt = serviceCardPrice(it);
+  const credentials = isService ? credentialBadges(it) : "";
+  const subTag = it.subcategory ? `<span class="subtag">${escHtml(subcatLabel(it.subcategory))}</span>` : "";
+  const rating = ratingPill(it);
   return `
     <div class="card" data-id="${it.id}">
       <div class="thumb" style="background-image:url(${escHtml(photo)})"></div>
       <button class="heart ${heartOn ? "on" : ""}" data-heart="${it.id}" aria-label="Save">${heartOn ? "♥" : "♡"}</button>
       <div class="info">
-        <div class="price">${priceLabel(it.price)}</div>
+        <div class="price">${priceTxt}</div>
         <div class="title">${escHtml(it.title)}</div>
+        ${subTag ? `<div class="meta">${subTag}${rating}</div>` : (rating ? `<div class="meta">${rating}</div>` : "")}
         <div class="meta">${escHtml(where)} · ${postedFromTs(it.created_at)}</div>
+        ${credentials ? `<div class="meta">${credentials}</div>` : ""}
       </div>
     </div>`;
+}
+
+function serviceCardPrice(it) {
+  if (it.category !== "services") return priceLabel(it.price);
+  switch (it.pricing_model) {
+    case "hourly":  return `from $${it.price}/hr`;
+    case "flat":    return `$${it.price} flat`;
+    case "quote":   return `Request quote`;
+    case "package": return `from $${it.price} / package`;
+    default:        return priceLabel(it.price);
+  }
+}
+function credentialBadges(it) {
+  const b = [];
+  if (it.licensed) b.push("✅ Licensed");
+  if (it.insured)  b.push("🛡️ Insured");
+  if (it.bonded)   b.push("🔒 Bonded");
+  return b.join(" · ");
+}
+function ratingPill(it) {
+  if (!it.rating_count || it.rating_count <= 0) return "";
+  const stars = "⭐".repeat(Math.round(it.rating_avg || 0));
+  return `<span class="rating-pill">${stars} ${(+it.rating_avg).toFixed(1)} (${it.rating_count})</span>`;
 }
 function bindCards(container) {
   container.querySelectorAll(".card").forEach(card => {
@@ -282,6 +391,88 @@ async function toggleSaved(id) {
   }
 }
 
+// =================== Service rendering helpers ===================
+function renderServiceDetailBlock(it) {
+  const rows = [];
+  if (it.pricing_model)        rows.push(["Pricing", labelPricing(it.pricing_model)]);
+  if (it.service_area_radius)  rows.push(["Service area", `${it.service_area_radius} miles from ${escHtml(it.zip || "ZIP")}`]);
+  if (it.years_experience)     rows.push(["Experience", `${it.years_experience} years`]);
+  let avail = it.availability;
+  if (avail && typeof avail === "string") { try { avail = JSON.parse(avail); } catch { avail = null; } }
+  if (avail && (avail.days?.length || avail.hours)) {
+    const days = (avail.days || []).map(d => d[0].toUpperCase() + d.slice(1)).join(", ");
+    rows.push(["Availability", `${days || "Any day"}${avail.hours ? " · " + escHtml(avail.hours) : ""}`]);
+  }
+  if (!rows.length) return "";
+  return `<div class="detail-section"><h4>Service details</h4><table class="kv">${
+    rows.map(([k,v]) => `<tr><td>${k}</td><td>${v}</td></tr>`).join("")
+  }</table></div>`;
+}
+function labelPricing(p) {
+  return ({hourly:"Hourly rate", flat:"Flat fee", quote:"Request a quote", package:"Package / bundle"})[p] || p;
+}
+
+function renderReviewsBlock(it) {
+  const reviews = it.reviews || [];
+  if (!reviews.length) return "";
+  return `<div class="detail-section">
+    <h4>Recent reviews of ${escHtml(it.seller_name || it.seller_username || "seller")}</h4>
+    <ul class="reviews">
+      ${reviews.map(r => `
+        <li>
+          <div class="r-head">${"⭐".repeat(r.rating)} <b>${escHtml(r.reviewer_name || r.reviewer_username || "User")}</b>
+            <span class="muted">· ${postedFromTs(r.created_at)}</span></div>
+          ${r.comment ? `<div class="r-body">${escHtml(r.comment)}</div>` : ""}
+        </li>`).join("")}
+    </ul>
+  </div>`;
+}
+
+// =================== Booking modal ===================
+function openBookingModal(it) {
+  if (!Api.isLoggedIn()) { go("login"); toast("Sign in to book."); return; }
+  let modal = $("#bookingModal");
+  if (!modal) {
+    modal = document.createElement("div");
+    modal.id = "bookingModal";
+    modal.className = "modal";
+    document.body.appendChild(modal);
+  }
+  const today = new Date(); const minDate = today.toISOString().slice(0,10);
+  modal.innerHTML = `
+    <div class="modal-card">
+      <h3>Request booking</h3>
+      <p class="muted">${escHtml(it.title)} — ${escHtml(it.seller_name || it.seller_username || "")}</p>
+      <label class="field"><span>Preferred date</span><input id="bkDate" type="date" min="${minDate}"></label>
+      <label class="field"><span>Your offer ($)</span><input id="bkPrice" type="number" min="0" placeholder="${it.price || ""}"></label>
+      <label class="field"><span>Message</span><textarea id="bkMsg" rows="3" placeholder="Briefly describe what you need…"></textarea></label>
+      <div class="error" id="bkErr" hidden></div>
+      <div class="modal-actions">
+        <button class="btn" id="bkCancel">Cancel</button>
+        <button class="btn btn-primary" id="bkSubmit">Send request</button>
+      </div>
+    </div>`;
+  modal.hidden = false;
+  $("#bkCancel").onclick = () => modal.hidden = true;
+  $("#bkSubmit").onclick = async () => {
+    clearError("bkErr");
+    const dateStr = $("#bkDate").value;
+    const ts = dateStr ? Math.floor(new Date(dateStr).getTime() / 1000) : null;
+    const price = parseInt($("#bkPrice").value, 10);
+    const msg = $("#bkMsg").value.trim();
+    try {
+      await Api.createBooking({
+        listing_id: it.id,
+        service_date: ts,
+        agreed_price: isNaN(price) ? null : price,
+        message: msg || null,
+      });
+      modal.hidden = true;
+      toast("Booking request sent!");
+    } catch (e) { showError("bkErr", e); }
+  };
+}
+
 // =================== Detail ===================
 let _currentDetail = null;
 async function openDetailById(id) {
@@ -298,21 +489,39 @@ function openDetail(it) {
   const dots = photos.map((_, i) => `<span class="dot ${i === 0 ? "active" : ""}"></span>`).join("");
   const where = it.city && it.state ? `${it.city}, ${it.state}` : (it.zip || "Local");
   const sellerName = it.seller_name || it.seller_username || "Seller";
+  const isService = it.category === "services";
+  const priceTxt = serviceCardPrice(it);
+  const credentials = isService ? credentialBadges(it) : "";
+  const subTag = it.subcategory ? subcatLabel(it.subcategory) : "";
+  const rating = ratingPill(it);
+  const serviceBlock = isService ? renderServiceDetailBlock(it) : "";
+  const reviewsBlock = renderReviewsBlock(it);
+  const ctaBtn = isService
+    ? `<button class="btn btn-primary" id="detailBook" data-listing="${it.id}" data-seller="${it.user_id}">Request booking</button>`
+    : "";
 
   $("#detailScroll").innerHTML = `
     <div class="gallery" id="gallery">${slides}</div>
     <div class="dots" id="dots">${dots}</div>
     <div class="detail-body">
-      <div class="detail-price">${priceLabel(it.price)}</div>
+      <div class="detail-price">${priceTxt}</div>
       <div class="detail-title">${escHtml(it.title)}</div>
       <div class="detail-meta">📍 ${escHtml(where)} · posted ${postedFromTs(it.created_at)}</div>
-      ${it.condition ? `<div class="detail-section"><h4>Condition</h4><p>${escHtml(it.condition)}</p></div>` : ""}
-      ${it.description ? `<div class="detail-section"><h4>Description</h4><p>${escHtml(it.description)}</p></div>` : ""}
+      ${subTag ? `<div class="detail-meta">${escHtml(subTag)}</div>` : ""}
+      ${rating ? `<div class="detail-meta">${rating}</div>` : ""}
+      ${credentials ? `<div class="detail-meta">${credentials}</div>` : ""}
+      ${it.condition && !isService ? `<div class="detail-section"><h4>Condition</h4><p>${escHtml(it.condition)}</p></div>` : ""}
+      ${it.description ? `<div class="detail-section"><h4>${isService ? "About this service" : "Description"}</h4><p>${escHtml(it.description)}</p></div>` : ""}
+      ${serviceBlock}
       <div class="seller">
         <div class="avatar">${escHtml(sellerName[0] || "?")}</div>
         <div class="who"><b>${escHtml(sellerName)}</b><span>@${escHtml(it.seller_username || "")}${it.seller_premium ? " · Premium" : ""}</span></div>
       </div>
+      ${ctaBtn ? `<div class="detail-section">${ctaBtn}</div>` : ""}
+      ${reviewsBlock}
     </div>`;
+  const bookBtn = $("#detailBook");
+  if (bookBtn) bookBtn.onclick = () => openBookingModal(it);
 
   const heart = $("#detailHeart");
   const on = state.saved.has(it.id);
@@ -446,14 +655,31 @@ $("#postPublish").onclick = async () => {
   const description = $("#poDesc").value.trim();
   const zip = $("#poZip").value.trim();
   if (!title || isNaN(price) || price < 0) return showError("poErr", "Title and a valid price are required.");
+
+  const payload = {
+    title, price, category, condition, description, zip,
+    photo_urls: state.postPhotos.slice(),
+  };
+  if (category === "services") {
+    const days = Array.from(document.querySelectorAll("#poDays input:checked")).map(c => c.value);
+    payload.subcategory          = $("#poSubcat").value || null;
+    payload.pricing_model        = $("#poPricing").value || "hourly";
+    payload.service_area_radius  = parseInt($("#poRadius").value, 10) || null;
+    payload.years_experience     = parseInt($("#poExperience").value, 10) || null;
+    payload.availability         = { days, hours: $("#poHours").value || "" };
+    payload.licensed             = $("#poLicensed").checked ? 1 : 0;
+    payload.insured              = $("#poInsured").checked  ? 1 : 0;
+    payload.bonded               = $("#poBonded").checked   ? 1 : 0;
+  }
+
   try {
-    await Api.createListing({
-      title, price, category, condition, description, zip,
-      photo_urls: state.postPhotos.slice()
-    });
+    await Api.createListing(payload);
     toast("Listed!");
     // Reset form
     $("#poTitle").value = ""; $("#poPrice").value = ""; $("#poDesc").value = ""; $("#poZip").value = "";
+    $("#poRadius").value = ""; $("#poExperience").value = ""; $("#poHours").value = "";
+    document.querySelectorAll("#poDays input").forEach(c => c.checked = false);
+    ["poLicensed","poInsured","poBonded"].forEach(id => { const el = $("#"+id); if (el) el.checked = false; });
     $("#photoStrip").innerHTML = "";
     state.postPhotos = [];
     go("home");
@@ -537,6 +763,126 @@ function onIncomingMessage(payload) {
   }
 }
 
+// =================== Bookings (My bookings tab) ===================
+async function loadBookings(role) {
+  state.bookingsRole = role;
+  const list = $("#bookingsList");
+  if (!list) return;
+  // Update tab active states
+  document.querySelectorAll("[data-bk-role]").forEach(b =>
+    b.classList.toggle("active", b.dataset.bkRole === role));
+  try {
+    const r = await Api.myBookings(role);
+    const items = r.bookings || [];
+    if (!items.length) {
+      list.innerHTML = `<div class="empty">No bookings ${role === "seller" ? "received" : "made"} yet.</div>`;
+      return;
+    }
+    list.innerHTML = items.map(b => bookingItemHtml(b, role)).join("");
+    bindBookingActions(list, role);
+  } catch (e) {
+    list.innerHTML = `<div class="empty">Couldn't load bookings: ${escHtml(e.message)}</div>`;
+  }
+}
+
+function bookingItemHtml(b, role) {
+  const other = role === "seller"
+    ? `${escHtml(b.buyer_name || b.buyer_username || "Buyer")}`
+    : `${escHtml(b.seller_name || b.seller_username || "Seller")}`;
+  const when = b.service_date ? new Date(b.service_date * 1000).toLocaleDateString() : "no date";
+  const price = b.agreed_price != null ? `$${b.agreed_price}` : "";
+  const sub = b.subcategory ? subcatLabel(b.subcategory) : "";
+  const actions = bookingActionsHtml(b, role);
+  return `
+    <li class="booking" data-id="${b.id}" data-listing="${b.listing_id}" data-seller="${b.seller_id}">
+      <div class="b-head">
+        <b>${escHtml(b.listing_title || "")}</b>
+        <span class="status status-${escHtml(b.status)}">${escHtml(b.status)}</span>
+      </div>
+      <div class="b-meta">${role === "seller" ? "from" : "to"} ${other} · ${when} · ${price} ${sub ? "· " + escHtml(sub) : ""}</div>
+      ${b.message ? `<div class="b-msg">${escHtml(b.message)}</div>` : ""}
+      <div class="b-actions">${actions}</div>
+    </li>`;
+}
+
+function bookingActionsHtml(b, role) {
+  const btns = [];
+  if (role === "seller") {
+    if (b.status === "pending")  btns.push(`<button class="btn btn-primary" data-bk-act="accepted">Accept</button>`,
+                                            `<button class="btn" data-bk-act="declined">Decline</button>`);
+    if (b.status === "accepted") btns.push(`<button class="btn btn-primary" data-bk-act="completed">Mark complete</button>`);
+  } else {
+    if (b.status === "pending" || b.status === "accepted")
+      btns.push(`<button class="btn" data-bk-act="cancelled">Cancel</button>`);
+    if (b.status === "completed")
+      btns.push(`<button class="btn btn-primary" data-bk-review>Leave review</button>`);
+  }
+  return btns.join("");
+}
+
+function bindBookingActions(list, role) {
+  list.querySelectorAll(".booking").forEach(li => {
+    const id = parseInt(li.dataset.id, 10);
+    li.querySelectorAll("[data-bk-act]").forEach(b => {
+      b.onclick = async () => {
+        try { await Api.updateBooking(id, { status: b.dataset.bkAct }); toast("Updated"); loadBookings(role); }
+        catch (e) { toast("Failed: " + e.message); }
+      };
+    });
+    const reviewBtn = li.querySelector("[data-bk-review]");
+    if (reviewBtn) reviewBtn.onclick = () => openReviewModal(id, parseInt(li.dataset.listing, 10));
+  });
+}
+
+function openReviewModal(bookingId, listingId) {
+  let modal = $("#reviewModal");
+  if (!modal) {
+    modal = document.createElement("div");
+    modal.id = "reviewModal";
+    modal.className = "modal";
+    document.body.appendChild(modal);
+  }
+  modal.innerHTML = `
+    <div class="modal-card">
+      <h3>Leave a review</h3>
+      <div class="rating-input" id="rvStars" style="font-size:32px;cursor:pointer;letter-spacing:6px;text-align:center">
+        ${[1,2,3,4,5].map(n => `<span data-r="${n}">☆</span>`).join("")}
+      </div>
+      <label class="field"><span>Comment (optional)</span><textarea id="rvText" rows="4" placeholder="How was the service?"></textarea></label>
+      <div class="error" id="rvErr" hidden></div>
+      <div class="modal-actions">
+        <button class="btn" id="rvCancel">Cancel</button>
+        <button class="btn btn-primary" id="rvSubmit">Submit</button>
+      </div>
+    </div>`;
+  modal.hidden = false;
+  let rating = 0;
+  modal.querySelectorAll("#rvStars [data-r]").forEach(s => {
+    s.onclick = () => {
+      rating = parseInt(s.dataset.r, 10);
+      modal.querySelectorAll("#rvStars [data-r]").forEach(x =>
+        x.textContent = parseInt(x.dataset.r, 10) <= rating ? "★" : "☆");
+    };
+  });
+  $("#rvCancel").onclick = () => modal.hidden = true;
+  $("#rvSubmit").onclick = async () => {
+    clearError("rvErr");
+    if (!rating) return showError("rvErr", "Pick a star rating first.");
+    try {
+      await Api.createReview({ booking_id: bookingId, rating, comment: $("#rvText").value.trim() || null });
+      modal.hidden = true;
+      toast("Review submitted!");
+      loadBookings(state.bookingsRole || "buyer");
+    } catch (e) { showError("rvErr", e); }
+  };
+}
+
+// Bind tab clicks (idempotent)
+document.addEventListener("click", e => {
+  const t = e.target.closest("[data-bk-role]");
+  if (t) loadBookings(t.dataset.bkRole);
+});
+
 // =================== Profile ===================
 async function renderProfile() {
   const u = Api.user();
@@ -558,6 +904,7 @@ async function renderProfile() {
       bindCards(el);
     }
   } catch {}
+  loadBookings(state.bookingsRole || "buyer");
   try {
     const r = await Api.saved();
     state.saved = new Set((r.listings || []).map(l => l.id));
