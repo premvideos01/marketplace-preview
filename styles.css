@@ -486,3 +486,32 @@ html, body { margin: 0; padding: 0; background: #efeff3; color: var(--text); fon
 .status-completed { background:#d1ecf1; color:#0c5460; }
 .status-declined  { background:#f8d7da; color:#721c24; }
 .status-cancelled { background:#e2e3e5; color:#383d41; }
+
+/* ============ Section picker (For Sale / Services) ============ */
+.section-picker {
+  display:grid; grid-template-columns:1fr 1fr; gap:12px;
+  padding:12px 16px 4px;
+}
+.big-section {
+  display:flex; flex-direction:column; align-items:center; justify-content:center;
+  gap:6px; padding:22px 12px;
+  border:2px solid var(--line, #e5e5e5); border-radius:14px;
+  background:#fff; color:#111;
+  cursor:pointer; transition:all 0.15s ease;
+  min-height:120px;
+}
+.big-section:hover { border-color:#999; transform:translateY(-1px); }
+.big-section.active {
+  border-color:#111; background:#111; color:#fff;
+  box-shadow:0 4px 12px rgba(0,0,0,0.12);
+}
+.big-section .big-ico  { font-size:36px; line-height:1; }
+.big-section .big-name { font-size:18px; font-weight:700; }
+.big-section .big-sub  { font-size:12px; opacity:0.65; text-align:center; }
+.big-section.active .big-sub { opacity:0.8; }
+
+@media (max-width:380px) {
+  .big-section { padding:16px 8px; min-height:100px; }
+  .big-section .big-ico  { font-size:30px; }
+  .big-section .big-name { font-size:16px; }
+}
