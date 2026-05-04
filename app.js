@@ -159,7 +159,6 @@ async function boot() {
 }
 
 function bootApp() {
-  renderSectionPicker();
   renderHomeCats();
   renderTrending();
   populatePostCategories();
@@ -210,85 +209,48 @@ $("#suGo").onclick = async () => {
   } catch (e) { showError("suErr", e); }
 };
 
-// =================== Home: section picker + categories ===================
-// Categories belonging to the "For Sale" side (everything except services)
-const SALE_CATEGORIES = CATEGORIES.filter(c => !["all","services"].includes(c.id));
-
-function renderSectionPicker() {
-  const picker = $("#sectionPicker");
-  const heading = $("#catHeading");
-  const grid = $("#catGrid");
-  if (!picker) return;
-
-  // Mark active button
-  picker.querySelectorAll("[data-section]").forEach(b =>
-    b.classList.toggle("active", b.dataset.section === state.section));
-
-  // Wire clicks (idempotent — replace handlers)
-  picker.querySelectorAll("[data-section]").forEach(b => {
-    b.onclick = () => {
-      state.section = state.section === b.dataset.section ? "" : b.dataset.section;
-      state.category = "all";
-      state.subcategory = "";
-      renderSectionPicker();
-      renderHomeCats();
-      loadHomeListings();
-    };
-  });
-
-  if (state.section === "sale") {
-    heading.textContent = "🛍️ For Sale categories";
-  } else if (state.section === "services") {
-    heading.textContent = "🛠️ Services";
-  } else {
-    heading.textContent = "Pick a section above, or browse everything";
-  }
-}
-
+// =================== Home: categories ===================
 function renderHomeCats() {
   const grid = $("#catGrid");
   if (!grid) return;
-
-  let cats;
-  if (state.section === "sale") {
-    cats = [{ id: "all", name: "All for sale", ico: "✨" }, ...SALE_CATEGORIES];
-  } else if (state.section === "services") {
-    // For Services, the category grid IS the subcategory grid
-    cats = [{ id: "all", name: "All services", ico: "✨" }, ...SUBCATEGORIES.services];
-  } else {
-    grid.innerHTML = "";  // hide grid when no section picked
-    renderSubcatChips();
-    return;
-  }
-
-  const activeId = state.section === "services" ? (state.subcategory || "all") : (state.category || "all");
-  grid.innerHTML = cats.map(c =>
-    `<button class="cat-tile ${c.id === activeId ? "active" : ""}" data-cat="${c.id}">
+  grid.innerHTML = CATEGORIES.map(c =>
+    `<button class="cat-tile ${c.id === state.category ? "active" : ""}" data-cat="${c.id}">
        <span class="ico">${c.ico}</span><span class="nm">${c.name}</span>
      </button>`).join("");
-
   grid.querySelectorAll("[data-cat]").forEach(b => {
     b.onclick = () => {
-      const id = b.dataset.cat;
-      if (state.section === "services") {
-        state.category = "services";
-        state.subcategory = id === "all" ? "" : id;
-      } else {
-        state.category = id;
-        state.subcategory = "";
-      }
+      state.category = b.dataset.cat;
+      state.subcategory = "";
       renderHomeCats();
+      renderSubcatChips();
       loadHomeListings();
     };
   });
   renderSubcatChips();
 }
 
-// Legacy subcat chips strip — only kept for non-section-picker contexts; with the new
-// section UX the subcategory IS the primary grid in Services mode, so we just hide this.
+// Subcategory chips strip — appears under the category grid when current category has subcategories
 function renderSubcatChips() {
-  const host = $("#subcatChips");
-  if (host) { host.innerHTML = ""; host.hidden = true; }
+  let host = $("#subcatChips");
+  if (!host) {
+    const grid = $("#catGrid");
+    if (!grid) return;
+    host = document.createElement("div");
+    host.id = "subcatChips";
+    host.className = "subcat-chips";
+    grid.parentNode.insertBefore(host, grid.nextSibling);
+  }
+  const subs = SUBCATEGORIES[state.category];
+  if (!subs) { host.innerHTML = ""; host.hidden = true; return; }
+  host.hidden = false;
+  host.innerHTML =
+    `<button class="chip ${!state.subcategory ? "active" : ""}" data-sub="">All ${state.category}</button>` +
+    subs.map(s =>
+      `<button class="chip ${state.subcategory === s.id ? "active" : ""}" data-sub="${s.id}">${s.ico} ${s.name}</button>`
+    ).join("");
+  host.querySelectorAll("[data-sub]").forEach(b => {
+    b.onclick = () => { state.subcategory = b.dataset.sub; renderSubcatChips(); loadHomeListings(); };
+  });
 }
 function renderTrending() {
   $("#trendingGrid").innerHTML = CATEGORIES.slice(1, 7).map(c =>
@@ -328,17 +290,8 @@ function syncPostServiceFields() {
 let _homeListings = [];
 async function loadHomeListings() {
   const params = { sort: state.sort };
-  // Section drives category filter
-  if (state.section === "services") {
-    params.category = "services";
-    if (state.subcategory) params.subcategory = state.subcategory;
-  } else if (state.section === "sale") {
-    if (state.category && state.category !== "all") params.category = state.category;
-  } else {
-    // No section picked — browse everything
-    if (state.category && state.category !== "all") params.category = state.category;
-    if (state.subcategory) params.subcategory = state.subcategory;
-  }
+  if (state.category && state.category !== "all") params.category = state.category;
+  if (state.subcategory) params.subcategory = state.subcategory;
   if (state.priceFilter !== "all") params.max_price = parseInt(state.priceFilter, 10);
   if (state.query) params.q = state.query;
   try {
